@@ -187,7 +187,7 @@ def main():
 
     # Input fields
     base_salary = st.number_input("Enter your base salary:", min_value=0.0, value=0.0, step=1000.0, format="%0.0f")
-    age = st.number_input("Enter your age:", min_value=0, value=0, step=1.0)
+    age = st.number_input("Enter your age:", min_value=0, value=0, step=1)
     aip_april = st.number_input("Enter your expected AIP for April:", min_value=0.0, value=0.0, step=500.0, format="%0.0f")
     aip_october = st.number_input("Enter your expected AIP for October:", min_value=0.0, value=0.0, step=500.0, format="%0.0f")
     pre_tax_percentage = st.number_input("Enter your pre-tax contribution percentage:", min_value=0.0, max_value=75.0, value=0.0, step=5.0, format="%0.0f")
