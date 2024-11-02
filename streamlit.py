@@ -186,12 +186,12 @@ def main():
     errors = []
 
     # Input fields
-    base_salary = st.number_input("Enter your base salary:", min_value=0.0, value=0.0, step=1000.0, format="%0.0f")
-    age = st.number_input("Enter your age:", min_value=0, value=0, step=1)
-    aip_april = st.number_input("Enter your expected AIP for April:", min_value=0.0, value=0.0, step=500.0, format="%0.0f")
-    aip_october = st.number_input("Enter your expected AIP for October:", min_value=0.0, value=0.0, step=500.0, format="%0.0f")
-    pre_tax_percentage = st.number_input("Enter your pre-tax contribution percentage:", min_value=0.0, max_value=75.0, value=0.0, step=5.0, format="%0.0f")
-    roth_percentage = st.number_input("Enter your Roth contribution percentage:", min_value=0.0, max_value=75.0, value=0.0, step=5.0, format="%0.0f")
+    base_salary = st.number_input("Enter your base salary:", min_value=0.0, value=100000.0, step=1000.0, format="%0.0f")
+    age = st.number_input("Enter your age:", min_value=0, value=50, step=1)
+    aip_april = st.number_input("Enter your expected AIP for April:", min_value=0.0, value=5000.0, step=500.0, format="%0.0f")
+    aip_october = st.number_input("Enter your expected AIP for October:", min_value=0.0, value=5000.0, step=500.0, format="%0.0f")
+    pre_tax_percentage = st.number_input("Enter your pre-tax contribution percentage:", min_value=0.0, max_value=75.0, value=25.0, step=5.0, format="%0.0f")
+    roth_percentage = st.number_input("Enter your Roth contribution percentage:", min_value=0.0, max_value=75.0, value=25.0, step=5.0, format="%0.0f")
     after_tax_percentage = st.number_input("Enter your after-tax contribution percentage:", min_value=0.0, max_value=75.0,step=5.0, value=0.0, format="%0.0f")
 
     # Check total contribution percentage input does not exceed 75%
@@ -216,17 +216,17 @@ def main():
                 return
             
             st.subheader("Total Annual Contributions:")
-            st.write(f"  Pre-tax contributions: ${total_pre_tax:.2f}")
-            st.write(f"  Roth contributions: ${total_roth:.2f}")
+            st.write(f"  Pre-tax contributions: ${total_pre_tax:,.2f}")
+            st.write(f"  Roth contributions: ${total_roth:,.2f}")
             if age >= 50:
-                st.write(f"  Pre-tax catch-up contributions: ${total_pre_tax_catch_up:.2f}")
-                st.write(f"  Roth catch-up contributions: ${total_roth_catch_up:.2f}")
+                st.write(f"  Pre-tax catch-up contributions: ${total_pre_tax_catch_up:,.2f}")
+                st.write(f"  Roth catch-up contributions: ${total_roth_catch_up:,.2f}")
             else:
                 st.write("  Catch-up contributions: N/A")
-            st.write(f"  Company match: ${total_company_match:.2f}")
-            st.write(f"  After-tax contributions: ${total_after_tax:.2f}")
-            st.write(f"  Total contributions: ${total_contributions:.2f}")
-            st.write(f"  Estimated True-Up: ${estimated_true_up:.2f}")
+            st.write(f"  Company match: ${total_company_match:,.2f}")
+            st.write(f"  After-tax contributions: ${total_after_tax:,.2f}")
+            st.write(f"  Total contributions: ${total_contributions:,.2f}")
+            st.write(f"  Estimated True-Up: ${estimated_true_up:,.2f}")
 
             st.write("---")
             
@@ -237,15 +237,15 @@ def main():
                     st.write("  *AIP added to base salary in April*")
                 elif row['period'] == 21:
                     st.write("  *AIP added to base salary in October*")
-                st.write(f"  Salary for period: ${row['salary_per_period']:.2f}")
-                st.write(f"  Pre-tax: ${row['pre_tax']:.2f}")
-                st.write(f"  Roth: ${row['roth']:.2f}")
+                st.write(f"  Salary for period: ${row['salary_per_period']:,.2f}")
+                st.write(f"  Pre-tax: ${row['pre_tax']:,.2f}")
+                st.write(f"  Roth: ${row['roth']:,.2f}")
                 if age >= 50:
-                    st.write(f"  Pre-tax catch-up: ${row['pre_tax_catch_up']:.2f}")
-                    st.write(f"  Roth catch-up: ${row['roth_catch_up']:.2f}")
-                st.write(f"  Company match: ${row['company_match']:.2f}")
-                st.write(f"  After-tax: ${row['after_tax']:.2f}")
-                st.write(f"  Total contributions as of this period: ${row['total_contributions']:.2f}")
+                    st.write(f"  Pre-tax catch-up: ${row['pre_tax_catch_up']:,.2f}")
+                    st.write(f"  Roth catch-up: ${row['roth_catch_up']:,.2f}")
+                st.write(f"  Company match: ${row['company_match']:,.2f}")
+                st.write(f"  After-tax: ${row['after_tax']:,.2f}")
+                st.write(f"  Total contributions as of this period: ${row['total_contributions']:,.2f}")
 
                 # Display any limit messages for this period
                 for message in row['limit_messages']:
