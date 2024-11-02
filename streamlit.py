@@ -193,7 +193,7 @@ def main():
     pre_tax_percentage = st.number_input("Enter your pre-tax contribution percentage:", min_value=0.0, max_value=75.0, value=0.0, step=5.0, format="%0.0f")
     roth_percentage = st.number_input("Enter your Roth contribution percentage:", min_value=0.0, max_value=75.0, value=0.0, step=5.0, format="%0.0f")
     after_tax_percentage = st.number_input("Enter your after-tax contribution percentage:", min_value=0.0, max_value=75.0,step=5.0, value=0.0, format="%0.0f")
-    
+
     # Check total contribution percentage input does not exceed 75%
     total_percentage = pre_tax_percentage + roth_percentage + after_tax_percentage
     if total_percentage > 75:
@@ -214,7 +214,20 @@ def main():
             if not breakdown:
                 st.warning("No contributions were made based on the input percentages.")
                 return
-
+            
+            st.subheader("Total Annual Contributions:")
+            st.write(f"  Pre-tax contributions: ${total_pre_tax:.2f}")
+            st.write(f"  Roth contributions: ${total_roth:.2f}")
+            if age >= 50:
+                st.write(f"  Pre-tax catch-up contributions: ${total_pre_tax_catch_up:.2f}")
+                st.write(f"  Roth catch-up contributions: ${total_roth_catch_up:.2f}")
+            else:
+                st.write("  Catch-up contributions: N/A")
+            st.write(f"  Company match: ${total_company_match:.2f}")
+            st.write(f"  After-tax contributions: ${total_after_tax:.2f}")
+            st.write(f"  Total contributions: ${total_contributions:.2f}")
+            st.write(f"  Estimated True-Up: ${estimated_true_up:.2f}")
+            
             st.subheader("Detailed Breakdown of Contributions per Pay Period:")
             for row in breakdown:
                 st.write(f"**Pay Period {row['period']}**")
@@ -238,18 +251,6 @@ def main():
 
                 st.write("---")
 
-            st.subheader("Total Annual Contributions:")
-            st.write(f"  Pre-tax contributions: ${total_pre_tax:.2f}")
-            st.write(f"  Roth contributions: ${total_roth:.2f}")
-            if age >= 50:
-                st.write(f"  Pre-tax catch-up contributions: ${total_pre_tax_catch_up:.2f}")
-                st.write(f"  Roth catch-up contributions: ${total_roth_catch_up:.2f}")
-            else:
-                st.write("  Catch-up contributions: N/A")
-            st.write(f"  Company match: ${total_company_match:.2f}")
-            st.write(f"  After-tax contributions: ${total_after_tax:.2f}")
-            st.write(f"  Total contributions: ${total_contributions:.2f}")
-            st.write(f"  Estimated True-Up: ${estimated_true_up:.2f}")
 
         except Exception as e:
             st.error(f"An error occurred: {e}")
