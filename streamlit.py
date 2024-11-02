@@ -227,6 +227,8 @@ def main():
             st.write(f"  After-tax contributions: ${total_after_tax:.2f}")
             st.write(f"  Total contributions: ${total_contributions:.2f}")
             st.write(f"  Estimated True-Up: ${estimated_true_up:.2f}")
+
+            st.write("---")
             
             st.subheader("Detailed Breakdown of Contributions per Pay Period:")
             for row in breakdown:
