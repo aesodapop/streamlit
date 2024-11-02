@@ -186,13 +186,13 @@ def main():
     errors = []
 
     # Input fields
-    base_salary = st.number_input("Enter your base salary:", min_value=0.0, value=100000.0, step=1000.0, format="%0.0f")
-    age = st.number_input("Enter your age:", min_value=0, value=50, step=1)
+    base_salary = st.number_input("Enter your base salary:", min_value=0.0, value=50000.0, step=1000.0, format="%0.0f")
+    age = st.number_input("Enter your age:", min_value=0, value=30, step=1)
     aip_april = st.number_input("Enter your expected AIP for April:", min_value=0.0, value=5000.0, step=500.0, format="%0.0f")
-    aip_october = st.number_input("Enter your expected AIP for October:", min_value=0.0, value=5000.0, step=500.0, format="%0.0f")
-    pre_tax_percentage = st.number_input("Enter your pre-tax contribution percentage:", min_value=0.0, max_value=75.0, value=25.0, step=5.0, format="%0.0f")
-    roth_percentage = st.number_input("Enter your Roth contribution percentage:", min_value=0.0, max_value=75.0, value=25.0, step=5.0, format="%0.0f")
-    after_tax_percentage = st.number_input("Enter your after-tax contribution percentage:", min_value=0.0, max_value=75.0,step=5.0, value=0.0, format="%0.0f")
+    aip_october = st.number_input("Enter your expected AIP for October:", min_value=0.0, value=2000.0, step=500.0, format="%0.0f")
+    pre_tax_percentage = st.number_input("Enter your pre-tax contribution percentage:", min_value=0.0, max_value=75.0, value=5.0, step=5.0, format="%0.0f")
+    roth_percentage = st.number_input("Enter your Roth contribution percentage:", min_value=0.0, max_value=75.0, value=10.0, step=5.0, format="%0.0f")
+    after_tax_percentage = st.number_input("Enter your after-tax contribution percentage:", min_value=0.0, max_value=75.0,step=5.0, value=15.0, format="%0.0f")
 
     # Check total contribution percentage input does not exceed 75%
     total_percentage = pre_tax_percentage + roth_percentage + after_tax_percentage
