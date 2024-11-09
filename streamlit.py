@@ -309,15 +309,6 @@ def main():
             except Exception as e:
                 st.error(f"An error occurred: {e}")
 
-        st.markdown("""
-            <style>
-                [data-testid="column"]:nth-child(2){
-                    background-color: lightgrey;
-                }
-            </style>
-            """, unsafe_allow_html=True
-        )
-
         try:
                 st.subheader("Breakdown of Your Contributions per Pay Period")
                 for row in breakdown:
