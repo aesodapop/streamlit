@@ -184,9 +184,16 @@ def calculate_401k_contributions(
 
 # Streamlit App
 def main():
-    
-    st.title(":green[2025 401(k) Contribution Calculator]")
-    st.subheader("Estimate your annual contribtions and your contributions per pay period to help determine your contribution percentages.")
+
+    st.html(
+        '<h1 style="color: green; font-size: 40px;">2025 401(k) Contribution Calculator</h1>'
+        )
+    st.html(
+        '<h2 style="color: white; font-size: 25px;">Estimate your annual contribtions and your contributions per pay period to help determine your contribution percentages.</h2>'
+        )
+
+    #st.title(":green[2025 401(k) Contribution Calculator]")
+    #st.subheader("Estimate your annual contribtions and your contributions per pay period to help determine your contribution percentages.")
 
     errors = []
 
