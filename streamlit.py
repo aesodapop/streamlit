@@ -4,11 +4,12 @@ import streamlit as st
 # Function to calculate 401(k) contributions
 def calculate_401k_contributions(
     base_salary, aip_april, aip_october, age,
-    pre_tax_percentage, roth_percentage, after_tax_percentage
+    pre_tax_percentage, roth_percentage, after_tax_percentage, add_catch_up
 ):
     salary_cap = 350000  # IRS salary cap for 401(k) contributions
     annual_pre_tax_roth_limit = 23500  # IRS limit for combined pre-tax and Roth contributions
     catch_up_limit = 7500  # Catch-up contribution limit for age 50+
+    add_catch_up_limit = 3750 #CU for ages 60-63
     contribution_limit = 70000  # Total contribution limit, including employee and employer contributions
     company_match_limit_percentage = 5 / 100  # Company match percentage
     pay_periods = 26  # Number of pay periods
@@ -16,13 +17,25 @@ def calculate_401k_contributions(
     # Cap the base salary at the IRS salary cap
     base_salary = min(base_salary, salary_cap)
 
-    # Adjust limits if employee is age 50 or older
-    if age >= 50:
-        contribution_limit += catch_up_limit
-        remaining_catch_up_limit = catch_up_limit
-    else:
-        catch_up_limit = 0  # No catch-up contributions if under 50
-        remaining_catch_up_limit = 0
+    # Adjust limits
+    if add_catch_up == False:
+        if age >= 50:
+            contribution_limit += catch_up_limit
+            remaining_catch_up_limit = catch_up_limit
+        else:
+            catch_up_limit = 0  # No catch-up contributions if under 50
+            remaining_catch_up_limit = 0
+    if add_catch_up == True:
+        if age >= 50 and age not in range(60, 64):
+                contribution_limit += catch_up_limit
+                remaining_catch_up_limit = catch_up_limit
+        elif age in range(60, 64):
+            catch_up_limit += add_catch_up_limit
+            contribution_limit += catch_up_limit
+            remaining_catch_up_limit = catch_up_limit
+        else:
+            catch_up_limit = 0  # No catch-up contributions if under 50
+            remaining_catch_up_limit = 0
 
     total_pre_tax = 0
     total_roth = 0
@@ -200,6 +213,11 @@ def main():
     col1, col3, col2 = st.columns([2.5, 0.5, 3])
 
     with col1:
+        add_catch_up = st.checkbox("My 401(k) plan includes additional catch-up contributions for ages 60-63")
+
+        #Employer match input box
+
+                
         #Base salary input box
         base_salary = st.text_input('Enter your base salary', placeholder='e.g. 100000')
         if base_salary != '':
@@ -211,12 +229,16 @@ def main():
             base_salary = 0
 
         #Age input box
-        age = st.text_input('Enter your age', placeholder='e.g. 37')
+        age = st.text_input('Enter your age as of Dec 31st', placeholder='e.g. 37')
         if age != '':
             try:
                 age = int(age)
             except ValueError:  
                 st.markdown(f"**:red[{age}]** Please input an integer.")
+
+        #check box for additional CU for ages 60-63
+        #add_catch_up = st.selectbox("401(k) plan has additional catch-up contributions for those ages 60-63?", ("Yes", "No"))
+          
     
         #1st bonus input box
         aip_april = st.text_input('Enter your 1st half of the year bonus', placeholder='e.g. 5000')
@@ -286,7 +308,7 @@ def main():
                     annual_pre_tax_roth_limit, catch_up_limit, contribution_limit
                 ) = calculate_401k_contributions(
                     base_salary, aip_april, aip_october, age,
-                    pre_tax_percentage, roth_percentage, after_tax_percentage
+                    pre_tax_percentage, roth_percentage, after_tax_percentage, add_catch_up
                 )
 
                 if not breakdown:
