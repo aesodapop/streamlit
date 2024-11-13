@@ -1,34 +1,33 @@
-
 import streamlit as st
+import pandas as pd  # Import pandas for DataFrame operations
 
 # Function to calculate 401(k) contributions
 def calculate_401k_contributions(
     base_salary, aip_april, aip_october, age,
-    pre_tax_percentage, roth_percentage, after_tax_percentage, add_catch_up
+    pre_tax_percentage, roth_percentage, after_tax_percentage, add_catch_up, employer_match
 ):
     salary_cap = 350000  # IRS salary cap for 401(k) contributions
     annual_pre_tax_roth_limit = 23500  # IRS limit for combined pre-tax and Roth contributions
     catch_up_limit = 7500  # Catch-up contribution limit for age 50+
-    add_catch_up_limit = 3750 #CU for ages 60-63
+    add_catch_up_limit = 3750  # Additional catch-up for ages 60-63
     contribution_limit = 70000  # Total contribution limit, including employee and employer contributions
-    company_match_limit_percentage = 5 / 100  # Company match percentage
     pay_periods = 26  # Number of pay periods
 
     # Cap the base salary at the IRS salary cap
     base_salary = min(base_salary, salary_cap)
 
     # Adjust limits
-    if add_catch_up == False:
+    if add_catch_up == "No":
         if age >= 50:
             contribution_limit += catch_up_limit
             remaining_catch_up_limit = catch_up_limit
         else:
             catch_up_limit = 0  # No catch-up contributions if under 50
             remaining_catch_up_limit = 0
-    if add_catch_up == True:
+    elif add_catch_up == "Yes":
         if age >= 50 and age not in range(60, 64):
-                contribution_limit += catch_up_limit
-                remaining_catch_up_limit = catch_up_limit
+            contribution_limit += catch_up_limit
+            remaining_catch_up_limit = catch_up_limit
         elif age in range(60, 64):
             catch_up_limit += add_catch_up_limit
             contribution_limit += catch_up_limit
@@ -122,8 +121,8 @@ def calculate_401k_contributions(
             limits_reached['catch_up_limit'] = True
             period_limit_messages.append(f"Reached catch-up limit of ${catch_up_limit:,} in this period.")
 
-        # Step 5: Calculate company match (simultaneously with pre-tax, Roth, and catch-up contributions)
-        max_company_match = salary_per_period * company_match_limit_percentage
+        # Step 5: Calculate company match
+        max_company_match = salary_per_period * employer_match
         eligible_for_match = pre_tax_contrib + roth_contrib + pre_tax_catch_up_contrib + roth_catch_up_contrib
         company_match_contrib = min(eligible_for_match, max_company_match, remaining_contribution_limit)
         total_company_match += company_match_contrib
@@ -167,16 +166,16 @@ def calculate_401k_contributions(
         # Store the breakdown for this period
         if period_total_contributions > 0:
             breakdown.append({
-                'period': period,
-                'salary_per_period': salary_per_period,
-                'pre_tax': pre_tax_contrib,
-                'roth': roth_contrib,
-                'pre_tax_catch_up': pre_tax_catch_up_contrib,
-                'roth_catch_up': roth_catch_up_contrib,
-                'company_match': company_match_contrib,
-                'after_tax': after_tax_contrib,
-                'total_contributions': total_contributions,
-                'limit_messages': period_limit_messages
+                'Period': period,
+                'Wages This Period': salary_per_period,
+                'Pre-Tax': pre_tax_contrib,
+                'Roth': roth_contrib,
+                'Pre-Tax Catch-Up': pre_tax_catch_up_contrib,
+                'Roth Catch-Up': roth_catch_up_contrib,
+                'After-Tax': after_tax_contrib,
+                'Company Match': company_match_contrib,
+                'Total Contributions to Date': total_contributions,
+                'Limit Messages': "; ".join(period_limit_messages) if period_limit_messages else ""
             })
 
         # Stop contributions once the overall contribution limit is reached
@@ -184,8 +183,8 @@ def calculate_401k_contributions(
             break
 
     # Estimate the true-up contribution based on company match eligibility
-    eligible_contributions_for_match = (total_pre_tax + total_roth + total_pre_tax_catch_up + total_roth_catch_up) / base_salary
-    expected_company_match = min(eligible_contributions_for_match * base_salary, company_match_limit_percentage * base_salary)
+    eligible_contributions_for_match = total_pre_tax + total_roth + total_pre_tax_catch_up + total_roth_catch_up
+    expected_company_match = min(eligible_contributions_for_match * employer_match, employer_match * base_salary)
     estimated_true_up = max(0, expected_company_match - total_company_match)
 
     return (
@@ -198,108 +197,120 @@ def calculate_401k_contributions(
 # Streamlit App
 def main():
 
-    st.html(
-        '<h1 style="color: green; font-size: 40px;">2025 401(k) Contribution Calculator</h1>'
-        )
-    st.html(
-        '<h2 style="color: white; font-size: 25px;">Estimate your annual contribtions and your contributions per pay period to help determine your contribution percentages.</h2>'
-        )
-
-    #st.title(":green[2025 401(k) Contribution Calculator]")
-    #st.subheader("Estimate your annual contribtions and your contributions per pay period to help determine your contribution percentages.")
+    st.markdown(
+        '<h1 style="color: #3dd56d; font-size: 40px;">2025 401(k) Contribution Calculator</h1>',
+        unsafe_allow_html=True
+    )
+    st.markdown("**Estimate your annual contributions and your contributions per pay period to help determine your contribution percentages.**")
+    st.markdown(" ")
 
     errors = []
 
     col1, col3, col2 = st.columns([2.5, 0.5, 3])
 
     with col1:
-        add_catch_up = st.checkbox("My 401(k) plan includes additional catch-up contributions for ages 60-63")
 
-        #Employer match input box
+        # Select box for additional catch-up
+        add_catch_up = st.selectbox("My 401(k) plan has additional catch-up contributions ages 60-63?", ("Yes", "No"))
 
-                
-        #Base salary input box
-        base_salary = st.text_input('Enter your base salary', placeholder='e.g. 100000')
-        if base_salary != '':
+        # Employer match input box
+        employer_match_input = st.text_input('Enter your employer match percentage', placeholder='e.g. 5')
+        if employer_match_input != '':
             try:
-                base_salary = int(base_salary)
+                employer_match = float(employer_match_input) / 100
             except ValueError:  
-                st.markdown(f"**:red[{base_salary}]** Please input an integer.")
+                st.markdown(f"**:red[{employer_match_input}]** Please input a valid percentage.")
+                return
+        else:
+            employer_match = 0.05  # Default to 5% if not entered
+
+        # Base salary input box
+        base_salary_input = st.text_input('Enter your base salary', placeholder='e.g. 100000')
+        if base_salary_input != '':
+            try:
+                base_salary = int(base_salary_input)
+            except ValueError:  
+                st.markdown(f"**:red[{base_salary_input}]** Please input an integer.")
+                return
         else:
             base_salary = 0
 
-        #Age input box
-        age = st.text_input('Enter your age as of Dec 31st', placeholder='e.g. 37')
-        if age != '':
+        # Age input box
+        age_input = st.text_input('Enter your age as of Dec 31st', placeholder='e.g. 37')
+        if age_input != '':
             try:
-                age = int(age)
+                age = int(age_input)
             except ValueError:  
-                st.markdown(f"**:red[{age}]** Please input an integer.")
+                st.markdown(f"**:red[{age_input}]** Please input an integer.")
+                return
+        else:
+            age = 0
 
-        #check box for additional CU for ages 60-63
-        #add_catch_up = st.selectbox("401(k) plan has additional catch-up contributions for those ages 60-63?", ("Yes", "No"))
-          
-    
-        #1st bonus input box
-        aip_april = st.text_input('Enter your 1st half of the year bonus', placeholder='e.g. 5000')
-        if aip_april != '':
+        # 1st bonus input box
+        aip_april_input = st.text_input('Enter your 1st half of the year bonus', placeholder='e.g. 5000')
+        if aip_april_input != '':
             try:
-                aip_april = int(aip_april)
+                aip_april = int(aip_april_input)
             except ValueError:
-                st.markdown(f"**:red[{aip_april}]** Please input an integer.")
+                st.markdown(f"**:red[{aip_april_input}]** Please input an integer.")
+                return
+        else:
+            aip_april = 0
 
-        #2nd bonus input box
-        aip_october = st.text_input('Enter your 2nd half of the year bonus', placeholder='e.g. 2000')
-        if aip_october != '':
+        # 2nd bonus input box
+        aip_october_input = st.text_input('Enter your 2nd half of the year bonus', placeholder='e.g. 2000')
+        if aip_october_input != '':
             try:
-                aip_october = int(aip_october)
+                aip_october = int(aip_october_input)
             except ValueError:  
-                st.markdown(f"**:red[{aip_october}]** Please input an integer.")
-            
-        #PT input box
-        pre_tax_percentage = st.text_input('Enter your pre-tax contribution percentage', placeholder='e.g. 5')
-        if pre_tax_percentage != '':
+                st.markdown(f"**:red[{aip_october_input}]** Please input an integer.")
+                return
+        else:
+            aip_october = 0
+
+        # Pre-tax input box
+        pre_tax_percentage_input = st.text_input('Enter your pre-tax contribution percentage', placeholder='e.g. 5')
+        if pre_tax_percentage_input != '':
             try:
-                pre_tax_percentage = int(pre_tax_percentage)
+                pre_tax_percentage = int(pre_tax_percentage_input)
             except ValueError:  
-                st.markdown(f"**:red[{pre_tax_percentage}]** Please input an integer.")
-            
-        #Roth input box
-        roth_percentage = st.text_input('Enter your Roth contribution percentage', placeholder='e.g. 10')
-        if roth_percentage != '':
+                st.markdown(f"**:red[{pre_tax_percentage_input}]** Please input an integer.")
+                return
+        else:
+            pre_tax_percentage = 0
+
+        # Roth input box
+        roth_percentage_input = st.text_input('Enter your Roth contribution percentage', placeholder='e.g. 10')
+        if roth_percentage_input != '':
             try:
-                roth_percentage = int(roth_percentage)
+                roth_percentage = int(roth_percentage_input)
             except ValueError:  
-                st.markdown(f"**:red[{roth_percentage}]** Please input an integer.")
-            
-        #AT input box
-        after_tax_percentage = st.text_input('Enter your after-tax contribution percentage', placeholder='e.g. 15')
-        if after_tax_percentage != '':
+                st.markdown(f"**:red[{roth_percentage_input}]** Please input an integer.")
+                return
+        else:
+            roth_percentage = 0
+
+        # After-tax input box
+        after_tax_percentage_input = st.text_input('Enter your after-tax contribution percentage', placeholder='e.g. 15')
+        if after_tax_percentage_input != '':
             try:
-                after_tax_percentage = int(after_tax_percentage)
+                after_tax_percentage = int(after_tax_percentage_input)
             except ValueError:  
-                st.markdown(f"**:red[{after_tax_percentage}]** Please input an integer.")
-            
-    # Check total contribution percentage input does not exceed 75%
-    try:
+                st.markdown(f"**:red[{after_tax_percentage_input}]** Please input an integer.")
+                return
+        else:
+            after_tax_percentage = 0
+
+        # Check total contribution percentage input does not exceed 75%
         total_percentage = pre_tax_percentage + roth_percentage + after_tax_percentage
-    except TypeError:
-        print("Type Error")
-    
-    try:
         if total_percentage > 75:
             st.error("Error: Please adjust your contribution percentages to not exceed 75%.")
             return
-    except TypeError:
-        print("Type Error 2")
-    except UnboundLocalError:
-        print("Unbound Local Error")
 
-    with col3:
-        print("")
-        
-    # Calculate and display results when the button is clicked
-    if st.button("Calculate"):
+        # Calculate button
+        calculate_button = st.button("Calculate")
+
+    if calculate_button:
         with col2:
             try:
                 (
@@ -308,7 +319,7 @@ def main():
                     annual_pre_tax_roth_limit, catch_up_limit, contribution_limit
                 ) = calculate_401k_contributions(
                     base_salary, aip_april, aip_october, age,
-                    pre_tax_percentage, roth_percentage, after_tax_percentage, add_catch_up
+                    pre_tax_percentage, roth_percentage, after_tax_percentage, add_catch_up, employer_match
                 )
 
                 if not breakdown:
@@ -316,7 +327,7 @@ def main():
                     return
 
                 st.markdown("**Your Annual Contribution Limits**")
-                st.markdown(f"  Pre-tax/Roth Limit: :green[${annual_pre_tax_roth_limit:,.0f}]")
+                st.markdown(f"  Pre-tax/Roth: :green[${annual_pre_tax_roth_limit:,.0f}]")
                 st.markdown(f"  Catch-Up: :green[${catch_up_limit:,.0f}]")
                 st.markdown(f"  Total: :green[${contribution_limit:,.0f}]")
                 
@@ -335,35 +346,30 @@ def main():
                 st.markdown(f"  Total (not including Estimated True-Up): :green[${total_contributions:,.2f}]")
                 st.markdown(f"  Estimated True-Up: :green[${estimated_true_up:,.2f}]")
 
+                st.write("---")
+            
             except Exception as e:
                 st.error(f"An error occurred: {e}")
 
-        try:
-                st.subheader("Breakdown of Your Contributions per Pay Period")
-                for row in breakdown:
-                    st.markdown(f"**Pay Period :green[{row['period']}]**")
-                    if row['period'] == 8:
-                        st.markdown("  :red[*1st half of the year bonus added to your wages this pay period*]")
-                    elif row['period'] == 21:
-                        st.markdown("  :red[*2nd half of the year bonus added to your wages this pay period*]")
-                    st.markdown(f"  Wages this pay period: :green[${row['salary_per_period']:,.2f}]")
-                    st.markdown(f"  Pre-tax: :green[${row['pre_tax']:,.2f}]")
-                    st.markdown(f"  Roth: :green[${row['roth']:,.2f}]")
-                    if age >= 50:
-                        st.markdown(f"  Pre-tax catch-up: :green[${row['pre_tax_catch_up']:,.2f}]")
-                        st.markdown(f"  Roth catch-up: :green[${row['roth_catch_up']:,.2f}]")
-                    st.markdown(f"  Company match: :green[${row['company_match']:,.2f}]")
-                    st.markdown(f"  After-tax: :green[${row['after_tax']:,.2f}]")
-                    st.markdown(f"  Total contributions as of this period: :green[${row['total_contributions']:,.2f}]")
+        
+        # Create a DataFrame from the breakdown list of dictionaries
+        df_breakdown = pd.DataFrame(breakdown)
 
-                    # Display any limit messages for this period
-                    for message in row['limit_messages']:
-                        st.warning(f"  **{message}**")
+        # Set 'Period' as the index
+        df_breakdown.set_index('Period', inplace=True)
 
-                    st.write("---")
+        # Transpose the DataFrame to swap rows and columns
+        df_transposed = df_breakdown.transpose()
 
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
+        # Format numeric values
+        numeric_rows = ['Wages This Period', 'Pre-Tax', 'Roth', 'Pre-Tax Catch-Up',
+                        'Roth Catch-Up', 'After-Tax', 'Company Match', 'Total Contributions to Date']
+        for row in numeric_rows:
+            df_transposed.loc[row] = df_transposed.loc[row].apply(lambda x: f"${x:,.2f}")
+
+        # Display the transposed DataFrame in Streamlit
+        st.subheader("Breakdown of Your Contributions per Pay Period")
+        st.dataframe(df_transposed)
 
 if __name__ == "__main__":
     main()
