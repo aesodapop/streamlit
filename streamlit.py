@@ -1,5 +1,6 @@
+
 import streamlit as st
-import pandas as pd  # Import pandas for DataFrame operations
+import pandas as pd
 
 # Function to calculate 401(k) contributions
 def calculate_401k_contributions(
@@ -48,6 +49,7 @@ def calculate_401k_contributions(
     limits_reached = {
         'pre_tax_roth_limit': False,
         'catch_up_limit': False,
+        'match_limit': False,
         'total_contribution_limit': False
     }
 
@@ -56,9 +58,15 @@ def calculate_401k_contributions(
     # Loop through each pay period
     for period in range(1, pay_periods + 1):
 
-        # Initialize limit messages for this period
-        period_limit_messages = []
-        
+        # Initialize limit messages and flags for this period
+
+        period_limits_hit = {
+            'pre_tax_roth_limit_hit': False,
+            'catch_up_limit_hit': False,
+            'match_limit_hit': False,
+            'total_contribution_limit_hit': False
+        }
+
         # Calculate salary per period and include AIP if applicable
         salary_per_period = base_salary / pay_periods
         if period == 8:
@@ -94,10 +102,10 @@ def calculate_401k_contributions(
         remaining_pre_tax_roth_limit -= roth_contrib
 
         # Check if pre-tax/Roth limit reached
-        if remaining_pre_tax_roth_limit <= 0 and not limits_reached['pre_tax_roth_limit']:
+        if remaining_pre_tax_roth_limit <= 0:
             limits_reached['pre_tax_roth_limit'] = True
-            period_limit_messages.append(f"Reached pre-tax/Roth limit of ${annual_pre_tax_roth_limit:,} in this period.")
-
+            period_limits_hit['pre_tax_roth_limit_hit'] = True
+ 
         # Step 3: Calculate pre-tax catch-up contributions
         pre_tax_catch_up_contrib = 0
         if age >= 50 and remaining_catch_up_limit > 0 and remaining_contribution_limit > 0:
@@ -117,9 +125,9 @@ def calculate_401k_contributions(
             remaining_catch_up_limit -= roth_catch_up_contrib
 
         # Check if catch-up limit reached
-        if remaining_catch_up_limit <= 0 and not limits_reached['catch_up_limit']:
+        if remaining_catch_up_limit <= 0:
             limits_reached['catch_up_limit'] = True
-            period_limit_messages.append(f"Reached catch-up limit of ${catch_up_limit:,} in this period.")
+            period_limits_hit['catch_up_limit_hit'] = True
 
         # Step 5: Calculate company match
         max_company_match = salary_per_period * employer_match
@@ -128,6 +136,11 @@ def calculate_401k_contributions(
         total_company_match += company_match_contrib
         remaining_contribution_limit -= company_match_contrib
 
+        # Check if match limit reached
+        if total_company_match == base_salary * employer_match:
+            limits_reached['match_limit'] = True
+            period_limits_hit['match_limit_hit'] = True
+
         # Update total contributions prior to adding after-tax
         total_contributions = (
             total_pre_tax + total_roth + total_pre_tax_catch_up + total_roth_catch_up +
@@ -135,6 +148,7 @@ def calculate_401k_contributions(
         )
 
         # Step 6: Calculate after-tax contributions
+        after_tax_contrib = 0
         if total_contributions >= contribution_limit - catch_up_limit and remaining_catch_up_limit > 0:
             after_tax_contrib = 0
         elif total_contributions < contribution_limit - catch_up_limit and total_contributions + after_tax_contrib_desired > contribution_limit - catch_up_limit and remaining_catch_up_limit > 0:
@@ -153,9 +167,9 @@ def calculate_401k_contributions(
         )
 
         # Check if total contribution limit reached
-        if remaining_contribution_limit <= 0 and not limits_reached['total_contribution_limit']:
+        if remaining_contribution_limit <= 0:
             limits_reached['total_contribution_limit'] = True
-            period_limit_messages.append(f"Reached total contribution limit of ${contribution_limit:,} in this period.")
+            period_limits_hit['total_contribution_limit_hit'] = True
 
         # Calculate total contributions for this period
         period_total_contributions = (
@@ -168,14 +182,22 @@ def calculate_401k_contributions(
             breakdown.append({
                 'Period': period,
                 'Wages This Period': salary_per_period,
+                'Pay Period Contributions': '',
                 'Pre-Tax': pre_tax_contrib,
                 'Roth': roth_contrib,
                 'Pre-Tax Catch-Up': pre_tax_catch_up_contrib,
                 'Roth Catch-Up': roth_catch_up_contrib,
-                'After-Tax': after_tax_contrib,
                 'Company Match': company_match_contrib,
-                'Total Contributions to Date': total_contributions,
-                'Limit Messages': "; ".join(period_limit_messages) if period_limit_messages else ""
+                'After-Tax': after_tax_contrib,
+                'Total Contributions': '',
+                'Pre-tax/Roth': total_pre_tax + total_roth,
+                'Catch-Up': total_pre_tax_catch_up + total_roth_catch_up,
+                'Match': total_company_match,
+                'Contributions to Date': total_contributions,
+                'pre_tax_roth_limit_hit': period_limits_hit['pre_tax_roth_limit_hit'],
+                'catch_up_limit_hit': period_limits_hit['catch_up_limit_hit'],
+                'match_limit_hit': period_limits_hit['match_limit_hit'],
+                'total_contribution_limit_hit': period_limits_hit['total_contribution_limit_hit']
             })
 
         # Stop contributions once the overall contribution limit is reached
@@ -184,8 +206,14 @@ def calculate_401k_contributions(
 
     # Estimate the true-up contribution based on company match eligibility
     eligible_contributions_for_match = total_pre_tax + total_roth + total_pre_tax_catch_up + total_roth_catch_up
-    expected_company_match = min(eligible_contributions_for_match * employer_match, employer_match * base_salary)
-    estimated_true_up = max(0, expected_company_match - total_company_match)
+    expected_match_percent = min(employer_match, eligible_contributions_for_match / base_salary)
+
+    expected_company_match = expected_match_percent * base_salary
+
+    if total_company_match != expected_company_match:
+        estimated_true_up = expected_company_match - total_company_match
+    else:
+        estimated_true_up = 0
 
     return (
         breakdown, total_pre_tax, total_roth, total_pre_tax_catch_up, total_roth_catch_up,
@@ -326,14 +354,14 @@ def main():
                     st.warning("No contributions were made based on the input percentages.")
                     return
 
-                st.markdown("**Your Annual Contribution Limits**")
+                st.markdown("**Annual Contribution Limits**")
                 st.markdown(f"  Pre-tax/Roth: :green[${annual_pre_tax_roth_limit:,.0f}]")
                 st.markdown(f"  Catch-Up: :green[${catch_up_limit:,.0f}]")
                 st.markdown(f"  Total: :green[${contribution_limit:,.0f}]")
                 
                 st.write("---")
                 
-                st.markdown("**Your Total Annual Contributions**")
+                st.markdown("**Total Annual Contributions**")
                 st.markdown(f"  Pre-tax: :green[${total_pre_tax:,.2f}]")
                 st.markdown(f"  Roth: :green[${total_roth:,.2f}]")
                 if age >= 50:
@@ -351,25 +379,52 @@ def main():
             except Exception as e:
                 st.error(f"An error occurred: {e}")
 
-        
-        # Create a DataFrame from the breakdown list of dictionaries
-        df_breakdown = pd.DataFrame(breakdown)
+            # Create a DataFrame from the breakdown list of dictionaries
+            df_breakdown = pd.DataFrame(breakdown)
 
-        # Set 'Period' as the index
-        df_breakdown.set_index('Period', inplace=True)
+            # Set 'Period' as the index
+            df_breakdown.set_index('Period', inplace=True)
 
-        # Transpose the DataFrame to swap rows and columns
-        df_transposed = df_breakdown.transpose()
+            # Transpose the DataFrame to swap rows and columns
+            df_transposed = df_breakdown.transpose()
 
-        # Format numeric values
-        numeric_rows = ['Wages This Period', 'Pre-Tax', 'Roth', 'Pre-Tax Catch-Up',
-                        'Roth Catch-Up', 'After-Tax', 'Company Match', 'Total Contributions to Date']
-        for row in numeric_rows:
-            df_transposed.loc[row] = df_transposed.loc[row].apply(lambda x: f"${x:,.2f}")
+            # Format numeric values
+            numeric_rows = ['Wages This Period', 'Pre-Tax', 'Roth', 'Pre-Tax Catch-Up',
+                            'Roth Catch-Up', 'After-Tax', 'Company Match', 'Pre-tax/Roth', 'Catch-Up',
+                            'Match', 'Contributions to Date']
 
-        # Display the transposed DataFrame in Streamlit
+            # Apply formatting to numeric rows
+            for row in numeric_rows:
+                df_transposed.loc[row] = df_transposed.loc[row].apply(lambda x: f"${x:,.2f}")
+
+            # Define a function to highlight specific cells when limits are hit
+            def highlight_limits(df):
+                styles = pd.DataFrame('', index=df.index, columns=df.columns)
+                for col in df.columns:
+                    # Highlight 'Total Pre-tax/Roth Contributions' if limit hit
+                    if df_transposed.loc['pre_tax_roth_limit_hit', col]:
+                        styles.loc['Pre-tax/Roth', col] = 'background-color: green'
+                    if catch_up_limit != 0:
+                        # Highlight 'Total Catch-Up Contributions' if limit hit
+                        if df_transposed.loc['catch_up_limit_hit', col]:
+                            styles.loc['Catch-Up', col] = 'background-color: green'
+                    # Highlight 'Total Match Contributions' if limit hit
+                    if df_transposed.loc['match_limit_hit', col]:
+                        styles.loc['Match', col] = 'background-color: green'
+                    # Highlight 'Total Contributions to Date' if total limit hit
+                    if df_transposed.loc['total_contribution_limit_hit', col]:
+                        styles.loc['Contributions to Date', col] = 'background-color: green'
+                return styles
+
+            # Remove limit hit flags before displaying
+            df_transposed_display = df_transposed.drop(['pre_tax_roth_limit_hit', 'catch_up_limit_hit', 'match_limit_hit', 'total_contribution_limit_hit'])
+
+            # Apply the highlighting
+            styled_df = df_transposed_display.style.apply(highlight_limits, axis=None)
+
+        # Display the styled DataFrame
         st.subheader("Breakdown of Your Contributions per Pay Period")
-        st.dataframe(df_transposed)
+        st.write(styled_df)
 
 if __name__ == "__main__":
     main()
