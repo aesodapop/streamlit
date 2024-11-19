@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 
@@ -189,11 +188,11 @@ def calculate_401k_contributions(
                 'Roth Catch-Up': roth_catch_up_contrib,
                 'Company Match': company_match_contrib,
                 'After-Tax': after_tax_contrib,
-                'Total Contributions': '',
+                'Contributions to Date': '',
                 'Pre-tax/Roth': total_pre_tax + total_roth,
                 'Catch-Up': total_pre_tax_catch_up + total_roth_catch_up,
                 'Match': total_company_match,
-                'Contributions to Date': total_contributions,
+                'Total': total_contributions,
                 'pre_tax_roth_limit_hit': period_limits_hit['pre_tax_roth_limit_hit'],
                 'catch_up_limit_hit': period_limits_hit['catch_up_limit_hit'],
                 'match_limit_hit': period_limits_hit['match_limit_hit'],
@@ -391,11 +390,11 @@ def main():
             # Format numeric values
             numeric_rows = ['Wages This Period', 'Pre-Tax', 'Roth', 'Pre-Tax Catch-Up',
                             'Roth Catch-Up', 'After-Tax', 'Company Match', 'Pre-tax/Roth', 'Catch-Up',
-                            'Match', 'Contributions to Date']
+                            'Match', 'Total']
 
             # Apply formatting to numeric rows
             for row in numeric_rows:
-                df_transposed.loc[row] = df_transposed.loc[row].apply(lambda x: f"${x:,.2f}")
+                df_transposed.loc[row] = df_transposed.loc[row].apply(lambda x: '' if x==0 else f"${x:,.2f}")
 
             # Define a function to highlight specific cells when limits are hit
             def highlight_limits(df):
@@ -413,7 +412,7 @@ def main():
                         styles.loc['Match', col] = 'background-color: green'
                     # Highlight 'Total Contributions to Date' if total limit hit
                     if df_transposed.loc['total_contribution_limit_hit', col]:
-                        styles.loc['Contributions to Date', col] = 'background-color: green'
+                        styles.loc['Total', col] = 'background-color: green'
                 return styles
 
             # Remove limit hit flags before displaying
@@ -423,7 +422,8 @@ def main():
             styled_df = df_transposed_display.style.apply(highlight_limits, axis=None)
 
         # Display the styled DataFrame
-        st.subheader("Breakdown of Your Contributions per Pay Period")
+        st.subheader("Breakdown of Your Contributions")
+        st.markdown(f" **Note:** Blank cells indicate no contributions. :green[Green] cells indicate a limit has been hit.")
         st.write(styled_df)
 
 if __name__ == "__main__":
