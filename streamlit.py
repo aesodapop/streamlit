@@ -394,7 +394,7 @@ def main():
 
             # Apply formatting to numeric rows
             for row in numeric_rows:
-                df_transposed.loc[row] = df_transposed.loc[row].apply(lambda x: '' if x==0 else f"${x:,.2f}")
+                df_transposed.loc[row] = df_transposed.loc[row].apply(lambda x: '$     -  ' if x==0 else f"${x:,.2f}")
 
             # Define a function to highlight specific cells when limits are hit
             def highlight_limits(df):
