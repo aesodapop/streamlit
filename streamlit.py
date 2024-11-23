@@ -219,10 +219,10 @@ def calculate_401k_contributions(
 def main():
 
     st.markdown(
-        '<h1 style="color: #3dd56d; font-size: 40px;">2025 401(k) Contribution Calculator</h1>',
+        '<h1 style="color: #FFFFFF; font-size: 40px;">401(k) Contribution Calculator</h1>',
         unsafe_allow_html=True
     )
-    st.markdown("**Estimate your annual contributions and your contributions per pay period to help determine your contribution percentages.**")
+    st.markdown("**Estimate your annual contributions and your contributions per pay period to help determine your contribution percentages for 2025.**")
     st.markdown(" ")
 
     errors = []
