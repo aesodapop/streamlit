@@ -4,7 +4,7 @@ import pandas as pd
 # Function to calculate 401(k) contributions
 def calculate_401k_contributions(
     base_salary, aip_april, aip_october, age,
-    pre_tax_percentage, roth_percentage, after_tax_percentage, add_catch_up, employer_match
+    pre_tax_percentage, roth_percentage, after_tax_percentage
 ):
     salary_cap = 350000  # IRS salary cap for 401(k) contributions
     annual_pre_tax_roth_limit = 23500  # IRS limit for combined pre-tax and Roth contributions
@@ -12,29 +12,23 @@ def calculate_401k_contributions(
     add_catch_up_limit = 3750  # Additional catch-up for ages 60-63
     contribution_limit = 70000  # Total contribution limit, including employee and employer contributions
     pay_periods = 26  # Number of pay periods
+    employer_match = 0.05
+    
 
     # Cap the base salary at the IRS salary cap
     base_salary = min(base_salary, salary_cap)
 
     # Adjust limits
-    if add_catch_up == "No":
-        if age >= 50:
-            contribution_limit += catch_up_limit
-            remaining_catch_up_limit = catch_up_limit
-        else:
-            catch_up_limit = 0  # No catch-up contributions if under 50
-            remaining_catch_up_limit = 0
-    elif add_catch_up == "Yes":
-        if age >= 50 and age not in range(60, 64):
-            contribution_limit += catch_up_limit
-            remaining_catch_up_limit = catch_up_limit
-        elif age in range(60, 64):
-            catch_up_limit += add_catch_up_limit
-            contribution_limit += catch_up_limit
-            remaining_catch_up_limit = catch_up_limit
-        else:
-            catch_up_limit = 0  # No catch-up contributions if under 50
-            remaining_catch_up_limit = 0
+    if age >= 50 and age not in range(60, 64):
+        contribution_limit += catch_up_limit
+        remaining_catch_up_limit = catch_up_limit
+    elif age in range(60, 64):
+        catch_up_limit += add_catch_up_limit
+        contribution_limit += catch_up_limit
+        remaining_catch_up_limit = catch_up_limit
+    else:
+        catch_up_limit = 0  # No catch-up contributions if under 50
+        remaining_catch_up_limit = 0
 
     total_pre_tax = 0
     total_roth = 0
@@ -205,9 +199,9 @@ def calculate_401k_contributions(
 
     # Estimate the true-up contribution based on company match eligibility
     eligible_contributions_for_match = total_pre_tax + total_roth + total_pre_tax_catch_up + total_roth_catch_up
-    expected_match_percent = min(employer_match, eligible_contributions_for_match / base_salary)
+    expected_match_percent = min(employer_match, eligible_contributions_for_match / (base_salary + aip_october + aip_april))
 
-    expected_company_match = expected_match_percent * base_salary
+    expected_company_match = expected_match_percent * (base_salary + aip_april + aip_october)
 
     if total_company_match != expected_company_match:
         estimated_true_up = expected_company_match - total_company_match
@@ -236,20 +230,6 @@ def main():
     col1, col3, col2 = st.columns([2.5, 0.5, 3])
 
     with col1:
-
-        # Select box for additional catch-up
-        add_catch_up = st.selectbox("My 401(k) plan has additional catch-up contributions ages 60-63?", ("Yes", "No"))
-
-        # Employer match input box
-        employer_match_input = st.text_input('Enter your employer match percentage', placeholder='e.g. 5')
-        if employer_match_input != '':
-            try:
-                employer_match = float(employer_match_input) / 100
-            except ValueError:  
-                st.markdown(f"**:red[{employer_match_input}]** Please input a valid percentage.")
-                return
-        else:
-            employer_match = 0.05  # Default to 5% if not entered
 
         # Base salary input box
         base_salary_input = st.text_input('Enter your base salary', placeholder='e.g. 100000')
@@ -346,7 +326,7 @@ def main():
                     annual_pre_tax_roth_limit, catch_up_limit, contribution_limit
                 ) = calculate_401k_contributions(
                     base_salary, aip_april, aip_october, age,
-                    pre_tax_percentage, roth_percentage, after_tax_percentage, add_catch_up, employer_match
+                    pre_tax_percentage, roth_percentage, after_tax_percentage
                 )
 
                 if not breakdown:
