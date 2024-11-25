@@ -174,7 +174,7 @@ def calculate_401k_contributions(
         if period_total_contributions > 0:
             breakdown.append({
                 'Period': period,
-                'Wages This Period': salary_per_period,
+                'Wages for Pay Period': salary_per_period,
                 'Pay Period Contributions': '',
                 'Pre-Tax': pre_tax_contrib,
                 'Roth': roth_contrib,
@@ -368,7 +368,7 @@ def main():
             df_transposed = df_breakdown.transpose()
 
             # Format numeric values
-            numeric_rows = ['Wages This Period', 'Pre-Tax', 'Roth', 'Pre-Tax Catch-Up',
+            numeric_rows = ['Wages for Pay Period', 'Pre-Tax', 'Roth', 'Pre-Tax Catch-Up',
                             'Roth Catch-Up', 'After-Tax', 'Company Match', 'Pre-tax/Roth', 'Catch-Up',
                             'Match', 'Total']
 
