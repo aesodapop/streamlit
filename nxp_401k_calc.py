@@ -175,7 +175,7 @@ def calculate_401k_contributions(
             breakdown.append({
                 'Period': period,
                 'Wages for Pay Period': salary_per_period,
-                'Pay Period Contributions': '',
+                'Contributions for Pay Period': '',
                 'Pre-Tax': pre_tax_contrib,
                 'Roth': roth_contrib,
                 'Pre-Tax Catch-Up': pre_tax_catch_up_contrib,
