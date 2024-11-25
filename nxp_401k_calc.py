@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 
-[theme]
 base="dark"
 
 # Function to calculate 401(k) contributions
