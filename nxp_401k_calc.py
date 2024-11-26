@@ -208,7 +208,7 @@ def calculate_401k_contributions(
     expected_company_match = expected_match_percent * (base_salary + aip_april + aip_october)
 
     if total_company_match != expected_company_match:
-        estimated_true_up = min(0, expected_company_match - total_company_match)
+        estimated_true_up = expected_company_match - total_company_match
     else:
         estimated_true_up = 0
 
