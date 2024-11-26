@@ -421,7 +421,7 @@ def main():
         st.write(f'Pre-Tax - contributions to the Plan made on a before-tax basis (before federal and most state income taxes, but not before FICA social secutiry and medicare taxes)')
         st.write(f'Roth - contributions to the Plan made on a after-tax basis, and under certain tax law, if certain requirements are met, Roth contributions and their investment earnings are not taxable when you take them as a qualified distribution')
         st.write(f'After-tax - contributions to the Plan made on a after-tax basis and are not eligible for NXP matching contributions')
-        st.write(f'Catch-up - additional pre-tax and/or Roth contributions you are allowed to make to the Plan if you are age eligible - see IRS details here')
+        st.write(f'Catch-up - additional pre-tax and/or Roth contributions you are allowed to make to the Plan if you are age 50 or older')
         st.write(f'True-up - if at the end of the year, you have not received your maximum match you were eligibe for, then NXP will make a true-up contribution in the following January to bring you up to the maximum NXP match')
         st.write(f'')
         st.write(f'')
