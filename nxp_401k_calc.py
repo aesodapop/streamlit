@@ -414,7 +414,7 @@ def main():
 
         # Display the styled DataFrame
         st.subheader("Breakdown of Your Contributions")
-        st.markdown(f" **Note:** Blank cells indicate no contributions. :blue[Blue] cells indicate a limit has been hit.")
+        st.markdown(f" :blue[Blue] cells indicate a limit has been hit and contributions of that type have stopped")
         st.write(styled_df)
         st.write(f'**Definitions**')
         st.write(f'Wages for Pay Period - your eligible earnings each pay period including Annual Incentive Payments, Sales Incentive Payments, shift differentials, overtime and lump-sum pay')
