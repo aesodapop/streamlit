@@ -413,7 +413,7 @@ def main():
         st.write(f'True-up - if at the end of the year, you have not received your maximum match you wewre eligibe for, then NXP will make a true-up contribution in the following January to bring you up to the maximum NXP match')
         st.write(f'')
         st.write(f'')
-        st.write(f' :green[**Disclaimer**] this calculator provides estimates and may not be exact')
+        st.write(f' :green[**Disclaimer** this calculator provides estimates and may not be exact]')
 
 if __name__ == "__main__":
     main()
