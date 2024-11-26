@@ -13,10 +13,14 @@ def calculate_401k_contributions(
     contribution_limit = 70000  # Total contribution limit, including employee and employer contributions
     pay_periods = 26  # Number of pay periods
     employer_match = 0.05
+    match_limit = 17500
+
+    match_limit = min(base_salary + aip_april + aip_october, salary_cap) * employer_match
     
 
     # Cap the base salary at the IRS salary cap
     base_salary = min(base_salary, salary_cap)
+    
 
     # Adjust limits
     if age >= 50 and age not in range(60, 64):
@@ -208,10 +212,12 @@ def calculate_401k_contributions(
     else:
         estimated_true_up = 0
 
+    total_annual_contribs = estimated_true_up + total_contributions
+
     return (
         breakdown, total_pre_tax, total_roth, total_pre_tax_catch_up, total_roth_catch_up,
         total_company_match, total_after_tax, total_contributions, estimated_true_up,
-        annual_pre_tax_roth_limit, catch_up_limit, contribution_limit
+        annual_pre_tax_roth_limit, catch_up_limit, contribution_limit, match_limit, total_annual_contribs
     )
 
 
@@ -320,7 +326,7 @@ def main():
                 (
                     breakdown, total_pre_tax, total_roth, total_pre_tax_catch_up, total_roth_catch_up,
                     total_company_match, total_after_tax, total_contributions, estimated_true_up,
-                    annual_pre_tax_roth_limit, catch_up_limit, contribution_limit
+                    annual_pre_tax_roth_limit, catch_up_limit, contribution_limit, match_limit, total_annual_contribs
                 ) = calculate_401k_contributions(
                     base_salary, aip_april, aip_october, age,
                     pre_tax_percentage, roth_percentage, after_tax_percentage
@@ -331,25 +337,31 @@ def main():
                     return
 
                 st.markdown("**Annual Contribution Limits**")
-                st.markdown(f"  Pre-tax/Roth: :green[${annual_pre_tax_roth_limit:,.0f}]")
-                st.markdown(f"  Catch-Up: :green[${catch_up_limit:,.0f}]")
-                st.markdown(f"  Total: :green[${contribution_limit:,.0f}]")
+                st.markdown(f"  Pre-tax/Roth: :blue[${annual_pre_tax_roth_limit:,.0f}]")
+                st.markdown(f"  Catch-Up: :blue[${catch_up_limit:,.0f}]")
+                st.markdown(f"  Match: :blue[${match_limit:,.0f}]")
+                st.markdown(f"  Total: :blue[${contribution_limit:,.0f}]")
                 
                 st.write("---")
                 
                 st.markdown("**Total Annual Contributions**")
-                st.markdown(f"  Pre-tax: :green[${total_pre_tax:,.2f}]")
-                st.markdown(f"  Roth: :green[${total_roth:,.2f}]")
+                st.markdown(f"  Pre-tax: :blue[${total_pre_tax:,.2f}]")
+                st.markdown(f"  Roth: :blue[${total_roth:,.2f}]")
                 if age >= 50:
-                    st.markdown(f"  Pre-tax catch-up: :green[${total_pre_tax_catch_up:,.2f}]")
-                    st.markdown(f"  Roth catch-up: :green[${total_roth_catch_up:,.2f}]")
+                    st.markdown(f"  Pre-tax catch-up: :blue[${total_pre_tax_catch_up:,.2f}]")
+                    st.markdown(f"  Roth catch-up: :blue[${total_roth_catch_up:,.2f}]")
                 else:
                     st.markdown("  Catch-up contributions: N/A")
-                st.markdown(f"  Company match: :green[${total_company_match:,.2f}]")
-                st.markdown(f"  After-tax: :green[${total_after_tax:,.2f}]")
-                st.markdown(f"  Total (not including Estimated True-Up): :green[${total_contributions:,.2f}]")
-                st.markdown(f"  Estimated True-Up: :green[${estimated_true_up:,.2f}]")
-
+                st.markdown(f"  Company match: :blue[${total_company_match:,.2f}]")
+                st.markdown(f"  After-tax: :blue[${total_after_tax:,.2f}]")
+                st.markdown(f"  Total (excluding True-Up): :blue[${total_contributions:,.2f}]")
+                st.markdown(f"  True-Up: :blue[${estimated_true_up:,.2f}]")
+                if estimated_true_up + total_contributions > contribution_limit:
+                    st.markdown(f"  Total (including True-Up): :red[${total_annual_contribs:,.2f}]")
+                    st.markdown(f"  :red[By our estimates your true-up may push you over the annual contribution limit. You may want to consider reducing your after-tax contribution percentage to avoid exceeding the annual contribution limit]")
+                else:
+                    st.markdown(f"  Total (including True-Up): :blue[${total_annual_contribs:,.2f}]")
+                
                 st.write("---")
             
             except Exception as e:
@@ -379,17 +391,17 @@ def main():
                 for col in df.columns:
                     # Highlight 'Total Pre-tax/Roth Contributions' if limit hit
                     if df_transposed.loc['pre_tax_roth_limit_hit', col]:
-                        styles.loc['Pre-tax/Roth', col] = 'background-color: green'
+                        styles.loc['Pre-tax/Roth', col] = 'background-color: #1E88E5'
                     if catch_up_limit != 0:
                         # Highlight 'Total Catch-Up Contributions' if limit hit
                         if df_transposed.loc['catch_up_limit_hit', col]:
-                            styles.loc['Catch-Up', col] = 'background-color: green'
+                            styles.loc['Catch-Up', col] = 'background-color: #1E88E5'
                     # Highlight 'Total Match Contributions' if limit hit
                     if df_transposed.loc['match_limit_hit', col]:
-                        styles.loc['Match', col] = 'background-color: green'
+                        styles.loc['Match', col] = 'background-color: #1E88E5'
                     # Highlight 'Total Contributions to Date' if total limit hit
                     if df_transposed.loc['total_contribution_limit_hit', col]:
-                        styles.loc['Total', col] = 'background-color: green'
+                        styles.loc['Total', col] = 'background-color: #1E88E5'
                 return styles
 
             # Remove limit hit flags before displaying
@@ -402,10 +414,10 @@ def main():
 
         # Display the styled DataFrame
         st.subheader("Breakdown of Your Contributions")
-        st.markdown(f" **Note:** Blank cells indicate no contributions. :green[Green] cells indicate a limit has been hit.")
+        st.markdown(f" **Note:** Blank cells indicate no contributions. :blue[Blue] cells indicate a limit has been hit.")
         st.write(styled_df)
         st.write(f'**Definitions**')
-        st.write(f'Wages for Pay Period - your regular earnings each pay period including Annual Incentive Payments, Sales Incentive Payments, shift differentials, overtime and lump-sum pay')
+        st.write(f'Wages for Pay Period - your eligible earnings each pay period including Annual Incentive Payments, Sales Incentive Payments, shift differentials, overtime and lump-sum pay')
         st.write(f'Pre-Tax - contributions to the Plan made on a before-tax basis (before federal and most state income taxes, but not before FICA social secutiry and medicare taxes')
         st.write(f'Roth - contributions to the Plan made on a after-tax basis, and under certain tax law, if certain requirements are met, Roth contributions and their investment earnings are not taxable when you take them as a qualified distribution')
         st.write(f'After-tax - contributions to the Plan made on a after-tax basis and are not eligible for NXP matching contributions')
@@ -413,7 +425,7 @@ def main():
         st.write(f'True-up - if at the end of the year, you have not received your maximum match you wewre eligibe for, then NXP will make a true-up contribution in the following January to bring you up to the maximum NXP match')
         st.write(f'')
         st.write(f'')
-        st.write(f' :green[**Disclaimer** this calculator provides estimates and may not be exact]')
+        st.write(f' :blue[**Disclaimer** this calculator provides estimates and may not be exact]')
 
 if __name__ == "__main__":
     main()
