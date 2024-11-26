@@ -416,7 +416,7 @@ def main():
         st.subheader("Breakdown of Your Contributions")
         st.markdown(f" :blue[Blue] cells indicate a limit has been hit and contributions of that type have stopped")
         st.write(styled_df)
-        st.write(f'**Definitions**')
+        st.subheader("Definitions")
         st.write(f'Wages for Pay Period - your eligible earnings each pay period including Annual Incentive Payments, Sales Incentive Payments, shift differentials, overtime and lump-sum pay')
         st.write(f'Pre-Tax - contributions to the Plan made on a before-tax basis (before federal and most state income taxes, but not before FICA social secutiry and medicare taxes')
         st.write(f'Roth - contributions to the Plan made on a after-tax basis, and under certain tax law, if certain requirements are met, Roth contributions and their investment earnings are not taxable when you take them as a qualified distribution')
