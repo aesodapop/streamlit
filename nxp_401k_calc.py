@@ -4,7 +4,7 @@ import pandas as pd
 # Function to calculate 401(k) contributions
 def calculate_401k_contributions(
     base_salary, aip_april, aip_october, age,
-    pre_tax_percentage, roth_percentage, after_tax_percentage
+    pre_tax_percentage, roth_percentage, after_tax_percentage, merit_increase, merit_time
 ):
     salary_cap = 350000  # IRS salary cap for 401(k) contributions
     annual_pre_tax_roth_limit = 23500  # IRS limit for combined pre-tax and Roth contributions
@@ -41,6 +41,8 @@ def calculate_401k_contributions(
     total_after_tax = 0
     total_company_match = 0
     total_contributions = 0
+    salary_per_period = 0
+    merit_increase = merit_increase / 100
 
     # Initialize limit reached flags
     limits_reached = {
@@ -64,12 +66,24 @@ def calculate_401k_contributions(
             'total_contribution_limit_hit': False
         }
 
+        #merit calculations 
+        if merit_increase == 0:
+            salary_per_period = base_salary / pay_periods
+        elif merit_increase > 0:
+            if period >= merit_time:
+                salary_per_period = (base_salary * (1 + merit_increase)) / pay_periods
+            else:
+                salary_per_period = base_salary / pay_periods 
+
+        #elif merit_increase > 0 and period > merit_time:
+            #salary_per_period = (base_salary * (1 + merit_increase)) / pay_periods 
+
         # Calculate salary per period and include AIP if applicable
-        salary_per_period = base_salary / pay_periods
         if period == 8:
             salary_per_period += aip_april
         elif period == 21:
             salary_per_period += aip_october
+
 
         # Remaining annual limits
         remaining_pre_tax_roth_limit = annual_pre_tax_roth_limit - (total_pre_tax + total_roth)
@@ -311,6 +325,28 @@ def main():
         else:
             after_tax_percentage = 0
 
+        # Merit increase input box
+        merit_increase_input = st.text_input('If applicable, enter your merit increase percentage', placeholder='e.g. 7')
+        if merit_increase_input != '':
+            try:
+                merit_increase = int(merit_increase_input)
+            except ValueError:  
+                st.markdown(f"**:red[{merit_increase_input}]** Please input an integer.")
+                return
+        else:
+            merit_increase = 0
+
+        # Merit increase input box
+        merit_time_input = st.text_input('If applicable, enter the pay period in which your merit will take effect', placeholder='e.g. 7')
+        if merit_time_input != '':
+            try:
+                merit_time = int(merit_time_input)
+            except ValueError:  
+                st.markdown(f"**:red[{merit_time_input}]** Please input an integer.")
+                return
+        else:
+            merit_time = 0
+
         # Check total contribution percentage input does not exceed 75%
         total_percentage = pre_tax_percentage + roth_percentage + after_tax_percentage
         if total_percentage > 75:
@@ -329,7 +365,7 @@ def main():
                     annual_pre_tax_roth_limit, catch_up_limit, contribution_limit, match_limit, total_annual_contribs
                 ) = calculate_401k_contributions(
                     base_salary, aip_april, aip_october, age,
-                    pre_tax_percentage, roth_percentage, after_tax_percentage
+                    pre_tax_percentage, roth_percentage, after_tax_percentage, merit_increase, merit_time
                 )
 
                 if not breakdown:
@@ -358,7 +394,7 @@ def main():
                 st.markdown(f"  True-Up: :blue[${estimated_true_up:,.2f}]")
                 if estimated_true_up + total_contributions > contribution_limit:
                     st.markdown(f"  Total (including True-Up): :red[${total_annual_contribs:,.2f}]")
-                    st.markdown(f"  :red[By our estimates your true-up may push you over the annual contribution limit. You may want to consider reducing your after-tax contribution percentage to avoid exceeding the annual contribution limit]")
+                    st.markdown(f"  :red[By our estimates your true-up will push you over the annual contribution limit, which results in Fidelity processing a refund of that excess contribuion amount potentially with a penalty. If you want to avoid Fidelity sending you a check, then should consider reducing your after-tax contribution percentage to avoid exceeding the contribution limit.]")
                 else:
                     st.markdown(f"  Total (including True-Up): :blue[${total_annual_contribs:,.2f}]")
                 
