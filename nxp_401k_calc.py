@@ -292,38 +292,53 @@ def main():
         else:
             aip_october = 0
 
+        # pre-tax slider
+        pre_tax_percentage_input = st.slider('Enter your pre-tax contribution percentage', 0, 75)
+        pre_tax_percentage = pre_tax_percentage_input
+
+
         # Pre-tax input box
-        pre_tax_percentage_input = st.text_input('Enter your pre-tax contribution percentage', placeholder='e.g. 5')
-        if pre_tax_percentage_input != '':
-            try:
-                pre_tax_percentage = int(pre_tax_percentage_input)
-            except ValueError:  
-                st.markdown(f"**:red[{pre_tax_percentage_input}]** Please input an integer.")
-                return
-        else:
-            pre_tax_percentage = 0
+##        pre_tax_percentage_input = st.text_input('Enter your pre-tax contribution percentage', placeholder='e.g. 5')
+##        if pre_tax_percentage_input != '':
+##            try:
+##                pre_tax_percentage = int(pre_tax_percentage_input)
+##            except ValueError:  
+##                st.markdown(f"**:red[{pre_tax_percentage_input}]** Please input an integer.")
+##                return
+##        else:
+##            pre_tax_percentage = 0
 
-        # Roth input box
-        roth_percentage_input = st.text_input('Enter your Roth contribution percentage', placeholder='e.g. 10')
-        if roth_percentage_input != '':
-            try:
-                roth_percentage = int(roth_percentage_input)
-            except ValueError:  
-                st.markdown(f"**:red[{roth_percentage_input}]** Please input an integer.")
-                return
-        else:
-            roth_percentage = 0
 
-        # After-tax input box
-        after_tax_percentage_input = st.text_input('Enter your after-tax contribution percentage', placeholder='e.g. 15')
-        if after_tax_percentage_input != '':
-            try:
-                after_tax_percentage = int(after_tax_percentage_input)
-            except ValueError:  
-                st.markdown(f"**:red[{after_tax_percentage_input}]** Please input an integer.")
-                return
-        else:
-            after_tax_percentage = 0
+        # roth slider
+        roth_percentage_input = st.slider('Enter your Roth contribution percentage', 0, 75)
+        roth_percentage = roth_percentage_input
+
+##        # Roth input box
+##        roth_percentage_input = st.text_input('Enter your Roth contribution percentage', placeholder='e.g. 10')
+##        if roth_percentage_input != '':
+##            try:
+##                roth_percentage = int(roth_percentage_input)
+##            except ValueError:  
+##                st.markdown(f"**:red[{roth_percentage_input}]** Please input an integer.")
+##                return
+##        else:
+##            roth_percentage = 0
+
+        # after-tax slider
+        after_tax_percentage_input = st.slider('Enter your after-tax contribution percentage', 0, 75)
+        after_tax_percentage = after_tax_percentage_input
+        
+
+##        # After-tax input box
+##        after_tax_percentage_input = st.text_input('Enter your after-tax contribution percentage', placeholder='e.g. 15')
+##        if after_tax_percentage_input != '':
+##            try:
+##                after_tax_percentage = int(after_tax_percentage_input)
+##            except ValueError:  
+##                st.markdown(f"**:red[{after_tax_percentage_input}]** Please input an integer.")
+##                return
+##        else:
+##            after_tax_percentage = 0
 
         # Merit increase input box
         merit_increase_input = st.text_input('If applicable, enter your merit increase percentage', placeholder='e.g. 7')
@@ -394,7 +409,7 @@ def main():
                 st.markdown(f"  True-Up: :blue[${estimated_true_up:,.2f}]")
                 if estimated_true_up + total_contributions > contribution_limit:
                     st.markdown(f"  Total (including True-Up): :red[${total_annual_contribs:,.2f}]")
-                    st.markdown(f"  :red[By our estimates your true-up will push you over the annual contribution limit, which results in Fidelity processing a refund of that excess contribuion amount potentially with a penalty. If you want to avoid Fidelity sending you a check, then should consider reducing your after-tax contribution percentage to avoid exceeding the contribution limit.]")
+                    st.markdown(f"  :red[By our estimates your true-up will push you over the annual contribution limit, which results in Fidelity processing a refund of that excess contribuion amount potentially with a penalty. If you want to avoid exceeding the limit, you should consider reducing your after-tax contribution %.]")
                 else:
                     st.markdown(f"  Total (including True-Up): :blue[${total_annual_contribs:,.2f}]")
                 
