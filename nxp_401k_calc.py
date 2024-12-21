@@ -4,7 +4,7 @@ import pandas as pd
 # Function to calculate 401(k) contributions
 def calculate_401k_contributions(
     base_salary, aip_april, aip_october, age,
-    pre_tax_percentage, roth_percentage, after_tax_percentage, merit_increase, merit_time
+    pre_tax_percentage, roth_percentage, after_tax_percentage, merit_increase, merit_time, pre_tax_effective, roth_effective, after_tax_effective
 ):
     salary_cap = 350000  # IRS salary cap for 401(k) contributions
     annual_pre_tax_roth_limit = 23500  # IRS limit for combined pre-tax and Roth contributions
@@ -75,15 +75,11 @@ def calculate_401k_contributions(
             else:
                 salary_per_period = base_salary / pay_periods 
 
-        #elif merit_increase > 0 and period > merit_time:
-            #salary_per_period = (base_salary * (1 + merit_increase)) / pay_periods 
-
         # Calculate salary per period and include AIP if applicable
         if period == 8:
             salary_per_period += aip_april
         elif period == 21:
             salary_per_period += aip_october
-
 
         # Remaining annual limits
         remaining_pre_tax_roth_limit = annual_pre_tax_roth_limit - (total_pre_tax + total_roth)
@@ -99,18 +95,24 @@ def calculate_401k_contributions(
         after_tax_contrib_desired = salary_per_period * (after_tax_percentage / 100)
 
         # Step 1: Calculate pre-tax contributions
-        pre_tax_contrib = min(pre_tax_contrib_desired, remaining_pre_tax_roth_limit, remaining_contribution_limit)
-        total_pre_tax += pre_tax_contrib
-        remaining_contribution_limit -= pre_tax_contrib
+        if pre_tax_effective <= period:
+            pre_tax_contrib = min(pre_tax_contrib_desired, remaining_pre_tax_roth_limit, remaining_contribution_limit)
+            total_pre_tax += pre_tax_contrib
+            remaining_contribution_limit -= pre_tax_contrib
+            # Update remaining pre-tax/Roth limit after contributions
+            remaining_pre_tax_roth_limit -= pre_tax_contrib
+        else:
+            pre_tax_contrib = 0
 
         # Step 2: Calculate Roth contributions
-        remaining_pre_tax_roth_limit -= pre_tax_contrib
-        roth_contrib = min(roth_contrib_desired, remaining_pre_tax_roth_limit, remaining_contribution_limit)
-        total_roth += roth_contrib
-        remaining_contribution_limit -= roth_contrib
-
-        # Update remaining pre-tax/Roth limit after contributions
-        remaining_pre_tax_roth_limit -= roth_contrib
+        if roth_effective <= period:
+            roth_contrib = min(roth_contrib_desired, remaining_pre_tax_roth_limit, remaining_contribution_limit)
+            total_roth += roth_contrib
+            remaining_contribution_limit -= roth_contrib
+            # Update remaining pre-tax/Roth limit after contributions
+            remaining_pre_tax_roth_limit -= roth_contrib
+        else:
+            roth_contrib = 0
 
         # Check if pre-tax/Roth limit reached
         if remaining_pre_tax_roth_limit <= 0:
@@ -118,22 +120,28 @@ def calculate_401k_contributions(
             period_limits_hit['pre_tax_roth_limit_hit'] = True
  
         # Step 3: Calculate pre-tax catch-up contributions
-        pre_tax_catch_up_contrib = 0
-        if age >= 50 and remaining_catch_up_limit > 0 and remaining_contribution_limit > 0:
-            pre_tax_catch_up_contrib_desired = max(0, pre_tax_contrib_desired - pre_tax_contrib)
-            pre_tax_catch_up_contrib = min(pre_tax_catch_up_contrib_desired, remaining_catch_up_limit, remaining_contribution_limit)
-            total_pre_tax_catch_up += pre_tax_catch_up_contrib
-            remaining_contribution_limit -= pre_tax_catch_up_contrib
-            remaining_catch_up_limit -= pre_tax_catch_up_contrib
+        if pre_tax_effective <= period:
+            pre_tax_catch_up_contrib = 0
+            if age >= 50 and remaining_catch_up_limit > 0 and remaining_contribution_limit > 0:
+                pre_tax_catch_up_contrib_desired = max(0, pre_tax_contrib_desired - pre_tax_contrib)
+                pre_tax_catch_up_contrib = min(pre_tax_catch_up_contrib_desired, remaining_catch_up_limit, remaining_contribution_limit)
+                total_pre_tax_catch_up += pre_tax_catch_up_contrib
+                remaining_contribution_limit -= pre_tax_catch_up_contrib
+                remaining_catch_up_limit -= pre_tax_catch_up_contrib
+        else:
+            pre_tax_catch_up_contrib = 0
 
         # Step 4: Calculate Roth catch-up contributions
-        roth_catch_up_contrib = 0
-        if age >= 50 and remaining_catch_up_limit > 0 and remaining_contribution_limit > 0:
-            roth_catch_up_contrib_desired = max(0, roth_contrib_desired - roth_contrib)
-            roth_catch_up_contrib = min(roth_catch_up_contrib_desired, remaining_catch_up_limit, remaining_contribution_limit)
-            total_roth_catch_up += roth_catch_up_contrib
-            remaining_contribution_limit -= roth_catch_up_contrib
-            remaining_catch_up_limit -= roth_catch_up_contrib
+        if roth_effective <= period:
+            roth_catch_up_contrib = 0
+            if age >= 50 and remaining_catch_up_limit > 0 and remaining_contribution_limit > 0:
+                roth_catch_up_contrib_desired = max(0, roth_contrib_desired - roth_contrib)
+                roth_catch_up_contrib = min(roth_catch_up_contrib_desired, remaining_catch_up_limit, remaining_contribution_limit)
+                total_roth_catch_up += roth_catch_up_contrib
+                remaining_contribution_limit -= roth_catch_up_contrib
+                remaining_catch_up_limit -= roth_catch_up_contrib
+        else:
+            roth_catch_up_contrib = 0
 
         # Check if catch-up limit reached
         if remaining_catch_up_limit <= 0:
@@ -159,17 +167,20 @@ def calculate_401k_contributions(
         )
 
         # Step 6: Calculate after-tax contributions
-        after_tax_contrib = 0
-        if total_contributions >= contribution_limit - catch_up_limit and remaining_catch_up_limit > 0:
+        if after_tax_effective <= period:
             after_tax_contrib = 0
-        elif total_contributions < contribution_limit - catch_up_limit and total_contributions + after_tax_contrib_desired > contribution_limit - catch_up_limit and remaining_catch_up_limit > 0:
-            after_tax_contrib = (contribution_limit - catch_up_limit) - total_contributions
-            total_after_tax += after_tax_contrib
-            remaining_contribution_limit -= after_tax_contrib
+            if total_contributions >= contribution_limit - catch_up_limit and remaining_catch_up_limit > 0:
+                after_tax_contrib = 0
+            elif total_contributions < contribution_limit - catch_up_limit and total_contributions + after_tax_contrib_desired > contribution_limit - catch_up_limit and remaining_catch_up_limit > 0:
+                after_tax_contrib = (contribution_limit - catch_up_limit) - total_contributions
+                total_after_tax += after_tax_contrib
+                remaining_contribution_limit -= after_tax_contrib
+            else:
+                after_tax_contrib = min(after_tax_contrib_desired, remaining_contribution_limit)
+                total_after_tax += after_tax_contrib
+                remaining_contribution_limit -= after_tax_contrib
         else:
-            after_tax_contrib = min(after_tax_contrib_desired, remaining_contribution_limit)
-            total_after_tax += after_tax_contrib
-            remaining_contribution_limit -= after_tax_contrib
+            after_tax_contrib = 0
 
         # Update total contributions post after-tax
         total_contributions = (
@@ -244,7 +255,7 @@ def main():
 
     errors = []
 
-    col1, col3, col2 = st.columns([2.5, 0.5, 3])
+    col1, col3, col2 = st.columns([3.0, 0.5, 3.0])
 
     with col1:
 
@@ -258,7 +269,8 @@ def main():
                 return
         else:
             base_salary = 0
-
+            
+        st.markdown('\n')
         # Age input box
         age_input = st.text_input('Enter your age as of Dec 31st', placeholder='e.g. 37')
         if age_input != '':
@@ -281,6 +293,7 @@ def main():
         else:
             aip_april = 0
 
+        st.markdown('\n')
         # 2nd bonus input box
         aip_october_input = st.text_input('Enter your 2nd half of the year bonus', placeholder='e.g. 2000')
         if aip_october_input != '':
@@ -292,54 +305,7 @@ def main():
         else:
             aip_october = 0
 
-        # pre-tax slider
-        pre_tax_percentage_input = st.slider('Enter your pre-tax contribution percentage', 0, 75)
-        pre_tax_percentage = pre_tax_percentage_input
-
-
-        # Pre-tax input box
-##        pre_tax_percentage_input = st.text_input('Enter your pre-tax contribution percentage', placeholder='e.g. 5')
-##        if pre_tax_percentage_input != '':
-##            try:
-##                pre_tax_percentage = int(pre_tax_percentage_input)
-##            except ValueError:  
-##                st.markdown(f"**:red[{pre_tax_percentage_input}]** Please input an integer.")
-##                return
-##        else:
-##            pre_tax_percentage = 0
-
-
-        # roth slider
-        roth_percentage_input = st.slider('Enter your Roth contribution percentage', 0, 75)
-        roth_percentage = roth_percentage_input
-
-##        # Roth input box
-##        roth_percentage_input = st.text_input('Enter your Roth contribution percentage', placeholder='e.g. 10')
-##        if roth_percentage_input != '':
-##            try:
-##                roth_percentage = int(roth_percentage_input)
-##            except ValueError:  
-##                st.markdown(f"**:red[{roth_percentage_input}]** Please input an integer.")
-##                return
-##        else:
-##            roth_percentage = 0
-
-        # after-tax slider
-        after_tax_percentage_input = st.slider('Enter your after-tax contribution percentage', 0, 75)
-        after_tax_percentage = after_tax_percentage_input
-        
-
-##        # After-tax input box
-##        after_tax_percentage_input = st.text_input('Enter your after-tax contribution percentage', placeholder='e.g. 15')
-##        if after_tax_percentage_input != '':
-##            try:
-##                after_tax_percentage = int(after_tax_percentage_input)
-##            except ValueError:  
-##                st.markdown(f"**:red[{after_tax_percentage_input}]** Please input an integer.")
-##                return
-##        else:
-##            after_tax_percentage = 0
-
+        st.markdown('\n')
         # Merit increase input box
         merit_increase_input = st.text_input('If applicable, enter your merit increase percentage', placeholder='e.g. 7')
         if merit_increase_input != '':
@@ -352,7 +318,7 @@ def main():
             merit_increase = 0
 
         # Merit increase input box
-        merit_time_input = st.text_input('If applicable, enter the pay period in which your merit will take effect', placeholder='e.g. 7')
+        merit_time_input = st.text_input('If applicable, enter the pay period your merit starts', placeholder='e.g. 7')
         if merit_time_input != '':
             try:
                 merit_time = int(merit_time_input)
@@ -362,17 +328,74 @@ def main():
         else:
             merit_time = 0
 
+        # Calculate button
+        calculate_button = st.button("Calculate")
+
+    with col2:
+        
+        # pre-tax slider
+        pre_tax_percentage_input = st.slider('Enter your pre-tax contribution percentage', 0, 75)
+        pre_tax_percentage = pre_tax_percentage_input
+
+        #pre-tax effective pay period
+##        pre_tax_effective_input = st.slider('Enter the pay period your pre-tax contributions start', 0, 26)
+##        pre_tax_effective = pre_tax_effective_input
+
+        pre_tax_effective_input = st.text_input('Enter the pay period your pre-tax contributions start', placeholder='e.g. 26')
+        if pre_tax_effective_input != '':
+            try:
+                pre_tax_effective = int(pre_tax_effective_input)
+            except ValueError:  
+                st.markdown(f"**:red[{pre_tax_effective_input}]** Please input an integer.")
+                return
+        else:
+            pre_tax_effective = 0
+
+        # roth slider
+        roth_percentage_input = st.slider('Enter your Roth contribution percentage', 0, 75)
+        roth_percentage = roth_percentage_input
+
+        #roth effective pay period
+##        roth_effective_input = st.slider('Enter the pay period your roth contributions start', 0, 26)
+##        roth_effective = roth_effective_input
+
+        roth_effective_input = st.text_input('Enter the pay period your roth contributions start', placeholder='e.g. 26')
+        if roth_effective_input != '':
+            try:
+                roth_effective = int(roth_effective_input)
+            except ValueError:  
+                st.markdown(f"**:red[{roth_effective_input}]** Please input an integer.")
+                return
+        else:
+            roth_effective = 0
+
+        # after-tax slider
+        after_tax_percentage_input = st.slider('Enter your after-tax contribution percentage', 0, 75)
+        after_tax_percentage = after_tax_percentage_input
+        
+        #after-tax effective pay period
+##        after_tax_effective_input = st.slider('Enter the pay period your after-tax contributions start', 0, 26)
+##        after_tax_effective = after_tax_effective_input
+
+        after_tax_effective_input = st.text_input('Enter the pay period your after-tax contributions start', placeholder='e.g. 26')
+        if after_tax_effective_input != '':
+            try:
+                after_tax_effective = int(after_tax_effective_input)
+            except ValueError:  
+                st.markdown(f"**:red[{after_tax_effective_input}]** Please input an integer.")
+                return
+        else:
+            after_tax_effective = 0
+
         # Check total contribution percentage input does not exceed 75%
         total_percentage = pre_tax_percentage + roth_percentage + after_tax_percentage
         if total_percentage > 75:
             st.error("Error: Please adjust your contribution percentages to not exceed 75%.")
             return
-
-        # Calculate button
-        calculate_button = st.button("Calculate")
+        
 
     if calculate_button:
-        with col2:
+        with col1:
             try:
                 (
                     breakdown, total_pre_tax, total_roth, total_pre_tax_catch_up, total_roth_catch_up,
@@ -380,22 +403,15 @@ def main():
                     annual_pre_tax_roth_limit, catch_up_limit, contribution_limit, match_limit, total_annual_contribs
                 ) = calculate_401k_contributions(
                     base_salary, aip_april, aip_october, age,
-                    pre_tax_percentage, roth_percentage, after_tax_percentage, merit_increase, merit_time
+                    pre_tax_percentage, roth_percentage, after_tax_percentage, merit_increase, merit_time, pre_tax_effective, roth_effective, after_tax_effective
                 )
 
                 if not breakdown:
                     st.warning("No contributions were made based on the input percentages.")
                     return
-
-                st.markdown("**Annual Contribution Limits**")
-                st.markdown(f"  Pre-tax/Roth: :blue[${annual_pre_tax_roth_limit:,.0f}]")
-                st.markdown(f"  Catch-Up: :blue[${catch_up_limit:,.0f}]")
-                st.markdown(f"  Match: :blue[${match_limit:,.0f}]")
-                st.markdown(f"  Total: :blue[${contribution_limit:,.0f}]")
                 
-                st.write("---")
-                
-                st.markdown("**Total Annual Contributions**")
+                #st.markdown("**Total Annual Contributions**")
+                st.subheader("Annual Contributions")
                 st.markdown(f"  Pre-tax: :blue[${total_pre_tax:,.2f}]")
                 st.markdown(f"  Roth: :blue[${total_roth:,.2f}]")
                 if age >= 50:
@@ -409,59 +425,93 @@ def main():
                 st.markdown(f"  True-Up: :blue[${estimated_true_up:,.2f}]")
                 if estimated_true_up + total_contributions > contribution_limit:
                     st.markdown(f"  Total (including True-Up): :red[${total_annual_contribs:,.2f}]")
-                    st.markdown(f"  :red[By our estimates your true-up will push you over the annual contribution limit, which results in Fidelity processing a refund of that excess contribuion amount potentially with a penalty. If you want to avoid exceeding the limit, you should consider reducing your after-tax contribution %.]")
+                    #st.markdown(f"  :red[By our estimates your true-up will push you over the annual contribution limit, which results in Fidelity processing a refund of that excess contribuion amount potentially with a penalty. If you want to avoid exceeding the limit, you should consider reducing your after-tax contribution %.]")
                 else:
                     st.markdown(f"  Total (including True-Up): :blue[${total_annual_contribs:,.2f}]")
                 
-                st.write("---")
+                #st.write("---")
             
             except Exception as e:
                 st.error(f"An error occurred: {e}")
 
-            # Create a DataFrame from the breakdown list of dictionaries
-            df_breakdown = pd.DataFrame(breakdown)
+        with col2:
+            try:
+                (
+                    breakdown, total_pre_tax, total_roth, total_pre_tax_catch_up, total_roth_catch_up,
+                    total_company_match, total_after_tax, total_contributions, estimated_true_up,
+                    annual_pre_tax_roth_limit, catch_up_limit, contribution_limit, match_limit, total_annual_contribs
+                ) = calculate_401k_contributions(
+                    base_salary, aip_april, aip_october, age,
+                    pre_tax_percentage, roth_percentage, after_tax_percentage, merit_increase, merit_time, pre_tax_effective, roth_effective, after_tax_effective
+                )
 
-            # Set 'Period' as the index
-            df_breakdown.set_index('Period', inplace=True)
+                if not breakdown:
+                    st.warning("No contributions were made based on the input percentages.")
+                    return
 
-            # Transpose the DataFrame to swap rows and columns
-            df_transposed = df_breakdown.transpose()
+                #st.markdown("**Annual Contribution Limits**")
+                st.markdown("\n")
+                st.markdown("\n")
+                st.markdown("\n")
+                st.markdown("\n")
+                st.subheader("\nAnnual Limits")
+                st.markdown(f"  Pre-tax/Roth: :blue[${annual_pre_tax_roth_limit:,.0f}]")
+                st.markdown(f"  Catch-Up: :blue[${catch_up_limit:,.0f}]")
+                st.markdown(f"  Match: :blue[${match_limit:,.0f}]")
+                st.markdown(f"  Total: :blue[${contribution_limit:,.0f}]")
+                
+                #st.write("---")
 
-            # Format numeric values
-            numeric_rows = ['Wages for Pay Period', 'Pre-Tax', 'Roth', 'Pre-Tax Catch-Up',
-                            'Roth Catch-Up', 'After-Tax', 'Company Match', 'Pre-tax/Roth', 'Catch-Up',
-                            'Match', 'Total']
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+                
 
-            # Apply formatting to numeric rows
-            for row in numeric_rows:
-                df_transposed.loc[row] = df_transposed.loc[row].apply(lambda x: '$     -  ' if x==0 else f"${x:,.2f}")
-
-            # Define a function to highlight specific cells when limits are hit
-            def highlight_limits(df):
-                styles = pd.DataFrame('', index=df.index, columns=df.columns)
-                for col in df.columns:
-                    # Highlight 'Total Pre-tax/Roth Contributions' if limit hit
-                    if df_transposed.loc['pre_tax_roth_limit_hit', col]:
-                        styles.loc['Pre-tax/Roth', col] = 'background-color: #1E88E5'
-                    if catch_up_limit != 0:
-                        # Highlight 'Total Catch-Up Contributions' if limit hit
-                        if df_transposed.loc['catch_up_limit_hit', col]:
-                            styles.loc['Catch-Up', col] = 'background-color: #1E88E5'
-                    # Highlight 'Total Match Contributions' if limit hit
-                    if df_transposed.loc['match_limit_hit', col]:
-                        styles.loc['Match', col] = 'background-color: #1E88E5'
-                    # Highlight 'Total Contributions to Date' if total limit hit
-                    if df_transposed.loc['total_contribution_limit_hit', col]:
-                        styles.loc['Total', col] = 'background-color: #1E88E5'
-                return styles
-
-            # Remove limit hit flags before displaying
-            df_transposed_display = df_transposed.drop(['pre_tax_roth_limit_hit','catch_up_limit_hit', 'match_limit_hit', 'total_contribution_limit_hit'])
-
-            # Apply the highlighting
-            styled_df = df_transposed_display.style.apply(highlight_limits, axis=None)
+        if estimated_true_up + total_contributions > contribution_limit:
+            st.markdown(f"  :red[By our estimates your true-up will push you over the annual contribution limit, which results in Fidelity processing a refund of that excess contribuion amount potentially with a penalty. If you want to avoid exceeding the limit, you should consider reducing your after-tax contribution %.]")
 
 
+        # Create a DataFrame from the breakdown list of dictionaries
+        df_breakdown = pd.DataFrame(breakdown)
+
+        # Set 'Period' as the index
+        df_breakdown.set_index('Period', inplace=True)
+
+        # Transpose the DataFrame to swap rows and columns
+        df_transposed = df_breakdown.transpose()
+
+        # Format numeric values
+        numeric_rows = ['Wages for Pay Period', 'Pre-Tax', 'Roth', 'Pre-Tax Catch-Up',
+                        'Roth Catch-Up', 'After-Tax', 'Company Match', 'Pre-tax/Roth', 'Catch-Up',
+                        'Match', 'Total']
+
+        # Apply formatting to numeric rows
+        for row in numeric_rows:
+            df_transposed.loc[row] = df_transposed.loc[row].apply(lambda x: '$     -  ' if x==0 else f"${x:,.2f}")
+
+        # Define a function to highlight specific cells when limits are hit
+        def highlight_limits(df):
+            styles = pd.DataFrame('', index=df.index, columns=df.columns)
+            for col in df.columns:
+                # Highlight 'Total Pre-tax/Roth Contributions' if limit hit
+                if df_transposed.loc['pre_tax_roth_limit_hit', col]:
+                    styles.loc['Pre-tax/Roth', col] = 'background-color: #1E88E5'
+                if catch_up_limit != 0:
+                    # Highlight 'Total Catch-Up Contributions' if limit hit
+                    if df_transposed.loc['catch_up_limit_hit', col]:
+                        styles.loc['Catch-Up', col] = 'background-color: #1E88E5'
+                # Highlight 'Total Match Contributions' if limit hit
+                if df_transposed.loc['match_limit_hit', col]:
+                    styles.loc['Match', col] = 'background-color: #1E88E5'
+                # Highlight 'Total Contributions to Date' if total limit hit
+                if df_transposed.loc['total_contribution_limit_hit', col]:
+                    styles.loc['Total', col] = 'background-color: #1E88E5'
+            return styles
+
+        # Remove limit hit flags before displaying
+        df_transposed_display = df_transposed.drop(['pre_tax_roth_limit_hit','catch_up_limit_hit', 'match_limit_hit', 'total_contribution_limit_hit'])
+
+        # Apply the highlighting
+        styled_df = df_transposed_display.style.apply(highlight_limits, axis=None)
 
         # Display the styled DataFrame
         st.subheader("Breakdown of Your Contributions")
