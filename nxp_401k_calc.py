@@ -200,7 +200,7 @@ def calculate_401k_contributions(
         )
 
         # Store the breakdown for this period
-        if period_total_contributions > 0:
+        if period_total_contributions >= 0:
             breakdown.append({
                 'Period': period,
                 'Wages for Pay Period': salary_per_period,
