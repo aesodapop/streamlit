@@ -341,7 +341,7 @@ def main():
 ##        pre_tax_effective_input = st.slider('Enter the pay period your pre-tax contributions start', 0, 26)
 ##        pre_tax_effective = pre_tax_effective_input
 
-        pre_tax_effective_input = st.text_input('Enter the pay period your pre-tax contributions start', placeholder='e.g. 26')
+        pre_tax_effective_input = st.text_input('Enter the pay period your pre-tax contributions start', placeholder='e.g. 1')
         if pre_tax_effective_input != '':
             try:
                 pre_tax_effective = int(pre_tax_effective_input)
@@ -349,7 +349,7 @@ def main():
                 st.markdown(f"**:red[{pre_tax_effective_input}]** Please input an integer.")
                 return
         else:
-            pre_tax_effective = 0
+            pre_tax_effective = 1
 
         # roth slider
         roth_percentage_input = st.slider('Enter your Roth contribution percentage', 0, 75)
@@ -367,7 +367,7 @@ def main():
                 st.markdown(f"**:red[{roth_effective_input}]** Please input an integer.")
                 return
         else:
-            roth_effective = 0
+            roth_effective = 1
 
         # after-tax slider
         after_tax_percentage_input = st.slider('Enter your after-tax contribution percentage', 0, 75)
@@ -385,7 +385,7 @@ def main():
                 st.markdown(f"**:red[{after_tax_effective_input}]** Please input an integer.")
                 return
         else:
-            after_tax_effective = 0
+            after_tax_effective = 1
 
         # Check total contribution percentage input does not exceed 75%
         total_percentage = pre_tax_percentage + roth_percentage + after_tax_percentage
