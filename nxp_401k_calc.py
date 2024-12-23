@@ -467,7 +467,7 @@ def main():
                 
 
         if estimated_true_up + total_contributions > contribution_limit:
-            st.markdown(f"  :red[By our estimates your true-up will push you over the annual contribution limit, which results in Fidelity processing a refund of that excess contribuion amount potentially with a penalty. If you want to avoid exceeding the limit, you should consider reducing your after-tax contribution %.]")
+            st.markdown(f"  :red[By our estimates your true-up will push you over the annual contribution limit, which results in Fidelity processing a refund of that excess contribuion amount. If you want to avoid exceeding the limit, you should consider reducing your after-tax contribution percentage.]")
 
 
         # Create a DataFrame from the breakdown list of dictionaries
@@ -486,7 +486,7 @@ def main():
 
         # Apply formatting to numeric rows
         for row in numeric_rows:
-            df_transposed.loc[row] = df_transposed.loc[row].apply(lambda x: '$     -  ' if x==0 else f"${x:,.2f}")
+            df_transposed.loc[row] = df_transposed.loc[row].apply(lambda x: '    -  ' if x==0 else f"${x:,.2f}")
 
         # Define a function to highlight specific cells when limits are hit
         def highlight_limits(df):
