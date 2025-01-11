@@ -630,7 +630,7 @@ def main():
 
         # Display the styled DataFrame
         st.write("\n")
-        st.subheader("Breakdown of Your Contributions")
+        st.subheader("Breakdown of Your Contributions", help="See your contributions broken down over each pay period in the chart below. The top section shows your wages, the section below that shows your Contributions for Each Pay Period, and the section below that shows your Contribution Totals as of the end of each pay period.")
         st.markdown(f" :blue[Blue] cells indicate a limit has been hit and contributions of that type have stopped")
         st.write(styled_df)
         st.subheader("Definitions")
