@@ -204,18 +204,19 @@ def calculate_401k_contributions(
         if period_total_contributions >= 0:
             breakdown.append({
                 'Period': period,
-                'Wages for Pay Period': salary_per_period,
-                'Contributions for Pay Period': '',
+                'Wages for Period': salary_per_period,
+                'CONTRIBUTIONS FOR PERIOD': '',
                 'Pre-Tax': pre_tax_contrib,
                 'Roth': roth_contrib,
                 'Pre-Tax Catch-Up': pre_tax_catch_up_contrib,
                 'Roth Catch-Up': roth_catch_up_contrib,
-                'NXP Match': company_match_contrib,
+                'Match': company_match_contrib,
                 'After-Tax': after_tax_contrib,
-                'Contributions to Date': '',
+                'CONTRIBUTIONS TO DATE': '',
                 'Pre-tax/Roth': total_pre_tax + total_roth,
                 'Catch-Up': total_pre_tax_catch_up + total_roth_catch_up,
-                'Match': total_company_match,
+                'Match ': total_company_match,
+                'After-Tax ': total_after_tax,
                 'Total': total_contributions,
                 'pre_tax_roth_limit_hit': period_limits_hit['pre_tax_roth_limit_hit'],
                 'catch_up_limit_hit': period_limits_hit['catch_up_limit_hit'],
@@ -243,7 +244,7 @@ def calculate_401k_contributions(
     return (
         breakdown, total_pre_tax, total_roth, total_pre_tax_catch_up, total_roth_catch_up,
         total_company_match, total_after_tax, total_contributions, estimated_true_up,
-        annual_pre_tax_roth_limit, catch_up_limit, contribution_limit, match_limit, total_annual_contribs
+        annual_pre_tax_roth_limit, catch_up_limit, add_catch_up_limit, contribution_limit, match_limit, total_annual_contribs
     )
 
 
@@ -261,15 +262,15 @@ def main():
     with col1:
 
         #st.write("**Wage Info**")
-        st.subheader("1 - Wage Info", help="Enter your wage/age information.")
+        st.subheader("Wage Info", help="Enter your wage/age information.")
 
         # Base salary input box
         base_salary_input = st.text_input('Base salary', placeholder='e.g. 100000')
         if base_salary_input != '':
             try:
-                base_salary = int(base_salary_input)
+                base_salary = float(base_salary_input)
             except ValueError:  
-                st.markdown(f"**:red[{base_salary_input}]** Please input an integer.")
+                st.markdown(f"**:red[{base_salary_input}]** Please input a number.")
                 return
         else:
             base_salary = 0
@@ -289,9 +290,9 @@ def main():
         aip_april_input = st.text_input('1st half of the year bonus', placeholder='e.g. 5000')
         if aip_april_input != '':
             try:
-                aip_april = int(aip_april_input)
+                aip_april = float(aip_april_input)
             except ValueError:
-                st.markdown(f"**:red[{aip_april_input}]** Please input an integer.")
+                st.markdown(f"**:red[{aip_april_input}]** Please input a number.")
                 return
         else:
             aip_april = 0
@@ -300,9 +301,9 @@ def main():
         aip_october_input = st.text_input('2nd half of the year bonus', placeholder='e.g. 2000')
         if aip_october_input != '':
             try:
-                aip_october = int(aip_october_input)
+                aip_october = float(aip_october_input)
             except ValueError:  
-                st.markdown(f"**:red[{aip_october_input}]** Please input an integer.")
+                st.markdown(f"**:red[{aip_october_input}]** Please input a number.")
                 return
         else:
             aip_october = 0
@@ -331,7 +332,7 @@ def main():
 
         st.write("\n")
         #st.write("**Current Contributions**")
-        st.subheader("3 - Contributions", help="Enter your current or test contribution rates & the pay period your contributions to start. If your contributions start in pay period 1, then you can leave the input box empty.")
+        st.subheader("Test Contributions", help="Enter your current or test contribution rates & the pay period your contributions to start. If your contributions start in pay period 1, then you can leave the input box empty.")
 
         #pre-tax input box
         pre_tax_percentage_input = st.text_input('Pre-Tax contribution %', placeholder='e.g. 5')
@@ -373,39 +374,39 @@ def main():
     with col2:
 
         #st.write("**YTD Contributions**")
-        st.subheader("2 - YTD Contributions", help="Enter your Year to Date (YTD) contributions that may have already occurred. If you don't have YTD contributions, then leave the input box empty.")
+        st.subheader("YTD Contributions", help="Enter your Year to Date (YTD) contributions that may have already occurred. If you don't have YTD contributions, then leave the input box empty.")
         
         #PT YTD input box
         pt_ytd_input = st.text_input('Year to Date Pre-Tax Contributions', placeholder='e.g. 1000')
         if pt_ytd_input != '':
             try:
-                pt_ytd = int(pt_ytd_input)
+                pt_ytd = float(pt_ytd_input)
             except ValueError:  
-                st.markdown(f"**:red[{pt_ytd_input}]** Please input an integer.")
+                st.markdown(f"**:red[{pt_ytd_input}]** Please input a number.")
                 return
         else:
             pt_ytd = 0
 
         #Pre-Tax Catch-Up YTD input box
         if age > 49:
-            pt_cu_ytd_input = st.text_input('Year to Date Pre-Tax Catch-Up Contributions', placeholder='e.g. 0')
+            pt_cu_ytd_input = st.text_input('Year to Date Pre-Tax Catch-Up Contributions', placeholder='e.g. 1500')
             if pt_cu_ytd_input != '':
                 try:
-                    pt_cu_ytd = int(pt_cu_ytd_input)
+                    pt_cu_ytd = float(pt_cu_ytd_input)
                 except ValueError:  
-                    st.markdown(f"**:red[{pt_cu_ytd_input}]** Please input an integer.")
+                    st.markdown(f"**:red[{pt_cu_ytd_input}]** Please input a number.")
                     return
             else:
                 pt_cu_ytd = 0
         else: pt_cu_ytd = 0
 
         #Roth YTD input box
-        r_ytd_input = st.text_input('Year to Date Roth Contributions', placeholder='e.g. 0')
+        r_ytd_input = st.text_input('Year to Date Roth Contributions', placeholder='e.g. 500')
         if r_ytd_input != '':
             try:
-                r_ytd = int(r_ytd_input)
+                r_ytd = float(r_ytd_input)
             except ValueError:  
-                st.markdown(f"**:red[{r_ytd_input}]** Please input an integer.")
+                st.markdown(f"**:red[{r_ytd_input}]** Please input a number.")
                 return
         else:
             r_ytd = 0
@@ -415,32 +416,32 @@ def main():
             r_cu_ytd_input = st.text_input('Year to Date Roth Catch-Up Contributions', placeholder='e.g. 0')
             if r_cu_ytd_input != '':
                 try:
-                    r_cu_ytd = int(r_cu_ytd_input)
+                    r_cu_ytd = float(r_cu_ytd_input)
                 except ValueError:  
-                    st.markdown(f"**:red[{r_cu_ytd_input}]** Please input an integer.")
+                    st.markdown(f"**:red[{r_cu_ytd_input}]** Please input a number.")
                     return
             else:
                 r_cu_ytd = 0
         else: r_cu_ytd = 0
 
         #NXP Match YTD input box
-        m_ytd_input = st.text_input('Year to Date NXP Match Contributions', placeholder='e.g. 0')
+        m_ytd_input = st.text_input('Year to Date NXP Match Contributions', placeholder='e.g. 500')
         if m_ytd_input != '':
             try:
-                m_ytd = int(m_ytd_input)
+                m_ytd = float(m_ytd_input)
             except ValueError:  
-                st.markdown(f"**:red[{m_ytd_input}]** Please input an integer.")
+                st.markdown(f"**:red[{m_ytd_input}]** Please input a number.")
                 return
         else:
             m_ytd = 0
 
         #NXP After-Tax YTD input box
-        at_ytd_input = st.text_input('Year to Date After-Tax Contributions', placeholder='e.g. 0')
+        at_ytd_input = st.text_input('Year to Date After-Tax Contributions', placeholder='e.g. 1000')
         if at_ytd_input != '':
             try:
-                at_ytd = int(at_ytd_input)
+                at_ytd = float(at_ytd_input)
             except ValueError:  
-                st.markdown(f"**:red[{at_ytd_input}]** Please input an integer.")
+                st.markdown(f"**:red[{at_ytd_input}]** Please input a number.")
                 return
         else:
             at_ytd = 0
@@ -466,39 +467,50 @@ def main():
         if age > 49:
             st.write("\n")
             st.write("\n")
-            
-        #pre-tax effective input box
-        pre_tax_effective_input = st.text_input('The pay period your Pre-Tax contributions start', placeholder='e.g. 1')
-        if pre_tax_effective_input != '':
-            try:
-                pre_tax_effective = int(pre_tax_effective_input)
-            except ValueError:  
-                st.markdown(f"**:red[{pre_tax_effective_input}]** Please input an integer.")
-                return
-        else:
-            pre_tax_effective = 1
+        
+        pt_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
 
-        #roth effective input box
-        roth_effective_input = st.text_input('The pay period your Roth contributions start', placeholder='e.g. 5')
-        if roth_effective_input != '':
-            try:
-                roth_effective = int(roth_effective_input)
-            except ValueError:  
-                st.markdown(f"**:red[{roth_effective_input}]** Please input an integer.")
-                return
-        else:
-            roth_effective = 1
+        pre_tax_effective_input = st.selectbox('The pay period your Pre-Tax contributions start', pt_list, index=0)
+        pre_tax_effective = int(pre_tax_effective_input)
 
-        #after-tax effective input box
-        after_tax_effective_input = st.text_input('The pay period your After-Tax contributions start', placeholder='e.g. 26')
-        if after_tax_effective_input != '':
-            try:
-                after_tax_effective = int(after_tax_effective_input)
-            except ValueError:  
-                st.markdown(f"**:red[{after_tax_effective_input}]** Please input an integer.")
-                return
-        else:
-            after_tax_effective = 1
+        # #pre-tax effective input box
+        # pre_tax_effective_input = st.text_input('The pay period your Pre-Tax contributions start', placeholder='e.g. 1')
+        # if pre_tax_effective_input != '':
+        #     try:
+        #         pre_tax_effective = int(pre_tax_effective_input)
+        #     except ValueError:  
+        #         st.markdown(f"**:red[{pre_tax_effective_input}]** Please input an integer.")
+        #         return
+        # else:
+        #     pre_tax_effective = 1
+
+        roth_effective_input = st.selectbox('The pay period your Roth contributions start', pt_list, index=0)
+        roth_effective = int(roth_effective_input)
+
+        # #roth effective input box
+        # roth_effective_input = st.text_input('The pay period your Roth contributions start', placeholder='e.g. 5')
+        # if roth_effective_input != '':
+        #     try:
+        #         roth_effective = int(roth_effective_input)
+        #     except ValueError:  
+        #         st.markdown(f"**:red[{roth_effective_input}]** Please input an integer.")
+        #         return
+        # else:
+        #     roth_effective = 1
+
+        after_tax_effective_input = st.selectbox('The pay period your After-Tax contributions start', pt_list, index=0)
+        after_tax_effective = int(after_tax_effective_input)
+
+        # #after-tax effective input box
+        # after_tax_effective_input = st.text_input('The pay period your After-Tax contributions start', placeholder='e.g. 26')
+        # if after_tax_effective_input != '':
+        #     try:
+        #         after_tax_effective = int(after_tax_effective_input)
+        #     except ValueError:  
+        #         st.markdown(f"**:red[{after_tax_effective_input}]** Please input an integer.")
+        #         return
+        # else:
+        #     after_tax_effective = 1
 
         # Check total contribution percentage input does not exceed 75%
         total_percentage = pre_tax_percentage + roth_percentage + after_tax_percentage
@@ -513,7 +525,7 @@ def main():
                 (
                     breakdown, total_pre_tax, total_roth, total_pre_tax_catch_up, total_roth_catch_up,
                     total_company_match, total_after_tax, total_contributions, estimated_true_up,
-                    annual_pre_tax_roth_limit, catch_up_limit, contribution_limit, match_limit, total_annual_contribs
+                    annual_pre_tax_roth_limit, catch_up_limit, add_catch_up_limit, contribution_limit, match_limit, total_annual_contribs
                 ) = calculate_401k_contributions(
                     base_salary, aip_april, aip_october, age,
                     pre_tax_percentage, roth_percentage, after_tax_percentage, merit_increase, merit_time, pre_tax_effective, roth_effective, after_tax_effective, pt_ytd, r_ytd, pt_cu_ytd, r_cu_ytd,
@@ -551,7 +563,7 @@ def main():
                 (
                     breakdown, total_pre_tax, total_roth, total_pre_tax_catch_up, total_roth_catch_up,
                     total_company_match, total_after_tax, total_contributions, estimated_true_up,
-                    annual_pre_tax_roth_limit, catch_up_limit, contribution_limit, match_limit, total_annual_contribs
+                    annual_pre_tax_roth_limit, catch_up_limit, add_catch_up_limit, contribution_limit, match_limit, total_annual_contribs
                 ) = calculate_401k_contributions(
                     base_salary, aip_april, aip_october, age,
                     pre_tax_percentage, roth_percentage, after_tax_percentage, merit_increase, merit_time, pre_tax_effective, roth_effective, after_tax_effective, pt_ytd, r_ytd, pt_cu_ytd, r_cu_ytd,
@@ -573,6 +585,7 @@ def main():
                 st.markdown(f"  Pre-tax/Roth: :blue[${annual_pre_tax_roth_limit:,.0f}]")
                 st.markdown(f"  Catch-Up: :blue[${catch_up_limit:,.0f}]")
                 st.markdown(f"  NXP Match: :blue[${match_limit:,.0f}]")
+                st.markdown(f"  After-tax: :blue[${contribution_limit - (annual_pre_tax_roth_limit + catch_up_limit + match_limit):,.0f}]")
                 st.markdown(f"  Total: :blue[${contribution_limit:,.0f}]")
                 
                 #st.write("---")
@@ -595,9 +608,9 @@ def main():
         df_transposed = df_breakdown.transpose()
 
         # Format numeric values
-        numeric_rows = ['Wages for Pay Period', 'Pre-Tax', 'Roth', 'Pre-Tax Catch-Up',
-                        'Roth Catch-Up', 'After-Tax', 'NXP Match', 'Pre-tax/Roth', 'Catch-Up',
-                        'Match', 'Total']
+        numeric_rows = ['Wages for Period', 'Pre-Tax', 'Roth', 'Pre-Tax Catch-Up',
+                        'Roth Catch-Up', 'After-Tax', 'Match', 'Pre-tax/Roth', 'Catch-Up',
+                        'Match ', 'After-Tax ', 'Total']
 
         # Apply formatting to numeric rows
         for row in numeric_rows:
@@ -638,7 +651,7 @@ def main():
         st.write(f'Pre-Tax - contributions to the Plan made on a before-tax basis (before federal and most state income taxes, but not before FICA social secutiry and medicare taxes)')
         st.write(f'Roth - contributions to the Plan made on a after-tax basis, and under certain tax law, if certain requirements are met, Roth contributions and their investment earnings are not taxable when you take them as a qualified distribution')
         st.write(f'After-tax - contributions to the Plan made on a after-tax basis and are not eligible for NXP matching contributions')
-        st.write(f'Catch-up - additional pre-tax and/or Roth contributions you are allowed to make to the Plan if you are age 50 or older')
+        st.write(f'Catch-up - additional pre-tax and/or Roth contributions are allowed if you are: ages 50-59 or 64+, or ages 60-63)')
         st.write(f'True-up - if at the end of the year, you have not received your maximum match you were eligibe for, then NXP will make a true-up contribution in the following January to bring you up to the maximum NXP match')
         st.write(f'')
         st.write(f'')
