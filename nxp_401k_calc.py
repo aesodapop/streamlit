@@ -1,3 +1,5 @@
+#link - https://nxp-401k-calc.streamlit.app/
+
 import streamlit as st
 import pandas as pd
 
@@ -585,8 +587,7 @@ def main():
                 st.markdown(f"  Pre-tax/Roth: :blue[${annual_pre_tax_roth_limit:,.0f}]")
                 st.markdown(f"  Catch-Up: :blue[${catch_up_limit:,.0f}]")
                 st.markdown(f"  NXP Match: :blue[${match_limit:,.0f}]")
-                st.markdown(f"  After-tax: :blue[${contribution_limit - (annual_pre_tax_roth_limit + catch_up_limit + match_limit):,.0f}]")
-                st.markdown(f"  Total: :blue[${contribution_limit:,.0f}]")
+                st.markdown(f"  Total (including Catch-Up): :blue[${contribution_limit:,.0f}]")
                 
                 #st.write("---")
 
