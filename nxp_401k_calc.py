@@ -254,7 +254,7 @@ def calculate_401k_contributions(
 def main():
 
     st.header('401(k) Contribution Calculator')
-    st.markdown("Estimate your annual contributions and your contributions per pay period to help determine your contribution percentages for 2025.")
+    st.markdown("To determine what to set your contribution percentages to for 2025 enter your Wage Information & Test Contributions below. The YTD Contributions information is not required. Note these are estimates and the output may not be exact.")
     st.markdown(" ")
 
     errors = []
