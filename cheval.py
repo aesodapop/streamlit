@@ -1,6 +1,9 @@
 import streamlit as st
 import os
 
+pg = st.navigation([st.Page("About.py"), st.Page("Gallery.py")])
+pg.run()
+
 # --- CONFIG ---
 st.set_page_config(
     page_title="Cheval Hill Country Hideaway", 
