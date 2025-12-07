@@ -1,6 +1,12 @@
 import streamlit as st
 import os
 
+# --- CONFIG ---
+st.set_page_config(page_title="Cheval Hill Country Hideaway", layout="wide")
+
+st.title("Cheval Hill Country Hideaway")
+st.subheader("In the Heart of Wine Country – Stonewall, Texas")
+
 st.write("""
 Escape to our charming **3-bedroom, 2-bath retreat** nestled in the rolling hills of
 Stonewall—right in the center of Texas Wine Country. Whether you’re planning a
