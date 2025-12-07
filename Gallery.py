@@ -2,7 +2,9 @@ import streamlit as st
 import os
 
 # --- CONFIG ---
-st.set_page_config(page_title="Cheval Gallery", layout="wide")
+st.set_page_config(
+    page_title="Cheval Gallery", 
+    layout="wide")
 
 # Directory containing your images
 IMAGE_DIR = "images"  # Folder containing your images
