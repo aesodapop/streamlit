@@ -74,7 +74,7 @@ custom_images = [
     {"file": "02_Living Room.jpg",  "name": "Living Room"},
     {"file": "03_Living Room.jpg",      "name": "Living Room"},
     {"file": "04_Kitchen.jpg",     "name": "Kitchen"},
-    {"file": "05_Kitchen.jpg",     "name": "Kitchen"},
+    {"file": "5_Kitchen.jpg",     "name": "Kitchen"},
     {"file": "5.5_Master.jpg",     "name": "Master Bedroom"},
     {"file": "06_Master.jpg",     "name": "Master Bedroom"},
     {"file": "07_Master Bath.jpg",     "name": "Master Bathroom"},
