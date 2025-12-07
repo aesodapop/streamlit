@@ -6,8 +6,6 @@ st.set_page_config(
   page_title="Cheval Hill Country Hideaway", 
   layout="wide")
 
-st.sidebar.success("About")
-
 st.subheader("In the Heart of Wine Country – Stonewall, Texas")
 
 st.write("""
