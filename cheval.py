@@ -6,8 +6,6 @@ st.set_page_config(
     page_title="Cheval Hill Country Hideaway", 
     layout="wide")
 
-st.sidebar.success("Gallery")
-
 # Directory containing your images
 IMAGE_DIR = "images"  # Folder containing your images
 
