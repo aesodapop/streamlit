@@ -66,15 +66,9 @@ On the **day of check-in**, you will receive an **Access Code Email at 4:00 PM**
 - **24-hour on-call phone number** (main contact for any questions or issues during your stay)
 """)
 
-####
-
 # Directory containing your images
 IMAGE_DIR = "images"  # Folder containing your images
 
-st.title("Cheval Property Gallery")
-st.write("")
-
-# 🔥 CUSTOM ORDER + CUSTOM DISPLAY NAMES
 custom_images = [
     {"file": "01_Entryway.jpg",        "name": "Entryway"},
     {"file": "02_Living Room.jpg",  "name": "Living Room"},
