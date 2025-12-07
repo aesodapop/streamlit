@@ -10,8 +10,6 @@ IMAGE_DIR = "images"  # Make sure this folder exists and contains your property 
 st.title("Cheval Property Image Gallery")
 st.write("")
 
-image_sorted = sorted(IMAGE_DIR)
-
 # Load images
 if not os.path.exists(IMAGE_DIR):
     st.error(f"Image directory '{IMAGE_DIR}' not found. Please create it and add images.")
@@ -26,3 +24,10 @@ else:
             img_path = os.path.join(IMAGE_DIR, img_name)
             with cols[idx % 3]:
                 st.image(img_path)
+
+image_files = [
+    f for f in os.listdir(IMAGE_DIR)
+    if f.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
+]
+
+image_files = sorted(image_files)   # alphabetical order A → Z
