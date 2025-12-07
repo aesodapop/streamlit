@@ -29,4 +29,4 @@ else:
         for idx, img_name in enumerate(image_files):
             img_path = os.path.join(IMAGE_DIR, img_name)
             with cols[idx % 3]:
-                st.image(img_path, use_column_width=True, caption=img_name)
+                st.image(img_path, caption=img_name)
